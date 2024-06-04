@@ -29,6 +29,7 @@ import {
   Float32BufferAttribute,
   PointsMaterial,
   Points,
+  MeshPhongMaterial,
 } from "https://cdn.skypack.dev/three@0.137";
 import { OrbitControls } from "https://cdn.skypack.dev/three-stdlib@2.8.5/controls/OrbitControls";
 import { RGBELoader } from "https://cdn.skypack.dev/three-stdlib@2.8.5/loaders/RGBELoader";
@@ -597,26 +598,31 @@ function createSmokeTrail() {
 }
 
 // Hàm xử lý khi click vào vệ tinh
-function handleSatelliteClick() {
-  alert("Bạn đã click vào vệ tinh!");
-}
-function animatePlaneAlongCurve(plane, startPosition, endPosition, earthRadius) {
-    let curve = new THREE.QuadraticBezierCurve3(
-        startPosition,
-        new THREE.Vector3(0, earthRadius + 10, 0),  // Điểm giữa nâng cao để tạo độ cong
-        endPosition
-    );
+// function handleSatelliteClick() {
+//   alert("Bạn đã click vào vệ tinh!");
+// }
+// function animatePlaneAlongCurve(
+//   plane,
+//   startPosition,
+//   endPosition,
+//   earthRadius
+// ) {
+//   let curve = new THREE.QuadraticBezierCurve3(
+//     startPosition,
+//     new THREE.Vector3(0, earthRadius + 10, 0), // Điểm giữa nâng cao để tạo độ cong
+//     endPosition
+//   );
 
-    let points = curve.getPoints(50);  // Tạo 50 điểm trên đường cong
-    let index = 0;
+//   let points = curve.getPoints(50); // Tạo 50 điểm trên đường cong
+//   let index = 0;
 
-    function movePlane() {
-        if (index < points.length) {
-            plane.position.copy(points[index]);
-            index++;
-            requestAnimationFrame(movePlane);  // Tiếp tục di chuyển máy bay trên đường cong
-        }
-    }
+//   function movePlane() {
+//     if (index < points.length) {
+//       plane.position.copy(points[index]);
+//       index++;
+//       requestAnimationFrame(movePlane); // Tiếp tục di chuyển máy bay trên đường cong
+//     }
+//   }
 
-    movePlane();  // Bắt đầu di chuyển máy bay
-}
+//   movePlane(); // Bắt đầu di chuyển máy bay
+// }
