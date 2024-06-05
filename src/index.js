@@ -1,4 +1,3 @@
-// import libraries
 import {
   Vector2,
   DoubleSide,
@@ -36,11 +35,11 @@ import { RGBELoader } from "https://cdn.skypack.dev/three-stdlib@2.8.5/loaders/R
 import { GLTFLoader } from "https://cdn.skypack.dev/three-stdlib@2.8.5/loaders/GLTFLoader";
 import anime from "https://cdn.skypack.dev/animejs@3.2.1";
 
-//declare the background
+// Declare the background
 let sunBackground = document.querySelector(".sun-background");
 let moonBackground = document.querySelector(".moon-background");
 
-//set up the scene
+// Set up the scene
 const scene = new Scene();
 
 const camera = new PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
@@ -65,13 +64,13 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
-//move the scene around
+// Move the scene around
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
 controls.dampingFactor = 0.05;
 controls.enableDamping = true;
 
-//set up the sun
+// Set up the sun
 const sunLight = new DirectionalLight(new Color("#FFFFFF"), 3.5);
 sunLight.position.set(10, 20, 10);
 sunLight.castShadow = true;
@@ -85,7 +84,7 @@ sunLight.shadow.camera.top = 10;
 sunLight.shadow.camera.right = 10;
 scene.add(sunLight);
 
-//set up the moon
+// Set up the moon
 const moonLight = new DirectionalLight(
   new Color("#77ccff").convertSRGBToLinear(),
   0
@@ -102,10 +101,6 @@ moonLight.shadow.camera.top = 10;
 moonLight.shadow.camera.right = 10;
 scene.add(moonLight);
 
-// // Create a helper for the shadow camera (optional)
-// const helper = new CameraHelper( light.shadow.camera );
-// scene.add( helper );
-
 let mousePos = new Vector2(0, 0);
 
 window.addEventListener("mousemove", (e) => {
@@ -118,14 +113,17 @@ window.addEventListener("mousemove", (e) => {
 
 let moon;
 let moonMaterial;
+var ring1,
+  ring2,
+  ring3 = "";
 (async function () {
   let pmrem = new PMREMGenerator(renderer);
   let envmapTexture = await new RGBELoader()
     .setDataType(FloatType)
-    .loadAsync("assets/old_room_2k.hdr"); // thanks to https://polyhaven.com/hdris !
+    .loadAsync("assets/quarry_cloudy_4k.hdr"); // thanks to https://polyhaven.com/hdris !
   let envMap = pmrem.fromEquirectangular(envmapTexture).texture;
 
-  const ring1 = new Mesh(
+  ring1 = new Mesh(
     new RingGeometry(15, 13.5, 80, 1, 0),
     new MeshPhysicalMaterial({
       color: new Color("#FFCB8E").convertSRGBToLinear().multiplyScalar(200),
@@ -141,7 +139,7 @@ let moonMaterial;
   ring1.moonOpacity = 0.03;
   ringsScene.add(ring1);
 
-  const ring2 = new Mesh(
+  ring2 = new Mesh(
     new RingGeometry(16.5, 15.75, 80, 1, 0),
     new MeshBasicMaterial({
       color: new Color("#FFCB8E").convertSRGBToLinear(),
@@ -154,7 +152,7 @@ let moonMaterial;
   ring2.moonOpacity = 0.1;
   ringsScene.add(ring2);
 
-  const ring3 = new Mesh(
+  ring3 = new Mesh(
     new RingGeometry(18, 17.75, 80),
     new MeshBasicMaterial({
       color: new Color("#FFCB8E").convertSRGBToLinear().multiplyScalar(50),
@@ -170,25 +168,16 @@ let moonMaterial;
   let textures = {
     // thanks to https://free3d.com/user/ali_alkendi !
     bump: await new TextureLoader().loadAsync("assets/earthbump.jpg"),
-    map: await new TextureLoader().loadAsync("assets/earthmap.jpg"),
+    map: await new TextureLoader().loadAsync("assets/Earth_Texture_Full.jpg"),
     spec: await new TextureLoader().loadAsync("assets/earthspec.jpg"),
-    moonTexture: await new TextureLoader().loadAsync(
-      "https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg"
-    ),
+    moonTexture: await new TextureLoader().loadAsync("assets/moon.jpg"),
     planeTrailMask: await new TextureLoader().loadAsync("assets/mask.png"),
   };
 
-  //create planes fly around earth
-  // "Cartoon Plane" (https://skfb.ly/UOLT) by antonmoek
+  // Create planes fly around earth
   let plane = (await new GLTFLoader().loadAsync("assets/plane/scene.glb")).scene
     .children[0];
-  let planesData = [
-    makePlane(plane, textures.planeTrailMask, envMap, scene),
-    // makePlane(plane, textures.planeTrailMask, envMap, scene),
-    // makePlane(plane, textures.planeTrailMask, envMap, scene),
-    // makePlane(plane, textures.planeTrailMask, envMap, scene),
-    // makePlane(plane, textures.planeTrailMask, envMap, scene),
-  ];
+  let planesData = [makePlane(plane, textures.planeTrailMask, envMap, scene)];
 
   let sphere = new Mesh(
     new SphereGeometry(10, 70, 70),
@@ -212,77 +201,51 @@ let moonMaterial;
   scene.add(sphere);
 
   // Load model tên lửa
-  let rocket;
+  let satelite;
   const gltfLoader = new GLTFLoader();
   gltfLoader.load("assets/plane/satelite.glb", (gltf) => {
-    rocket = gltf.scene;
-    rocket.scale.set(0.35, 0.35, 0.35); // Đặt kích thước cho model tên lửa
+    satelite = gltf.scene;
+    let modelSize = 0.35;
+    satelite.scale.set(modelSize, modelSize, modelSize);
 
-    // Đặt vị trí tên lửa lên trên bề mặt của địa cầu
-    let rocketPosition = new Vector3(0, 12, 0); // Đặt vị trí ban đầu của tên lửa (x, y, z)
-    rocketPosition.add(sphere.position); // Cộng với vị trí của địa cầu để đặt tên lửa lên trên địa cầu
-    rocket.position.copy(rocketPosition);
+    let satelitePosition = new Vector3(0, 4.5, 0);
+    satelitePosition.add(sphere.position);
+    satelite.position.copy(satelitePosition);
 
-    scene.add(rocket); // Thêm tên lửa vào scene
-    rocket.addEventListener("click", () => {
+    scene.add(satelite);
+    satelite.addEventListener("click", () => {
       console.log("Bạn đã click vào tên lửa!");
     });
 
-    // Thêm sự kiện click vào renderer
     renderer.domElement.addEventListener("click", (event) => {
       event.preventDefault();
-      // Tính toán vị trí chuột trên màn hình
       let mouse = new Vector2();
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-      // Tạo một raycaster từ vị trí chuột và camera
       let raycaster = new Raycaster();
       raycaster.setFromCamera(mouse, camera);
 
-      // Tìm các đối tượng được chạm bởi raycaster (trong trường hợp này là mặt đất)
-      let intersects = raycaster.intersectObjects([sphere]); // Đặt đối tượng mà raycaster có thể chạm vào (trong trường hợp này là địa cầu)
-
-      // Nếu có đối tượng được chạm và biến rocket đã được khởi tạo
-      if (intersects.length > 0 && rocket) {
-        // Lấy vị trí của điểm chạm trên địa cầu
-        let targetPosition = intersects[0].point;
-        // Di chuyển máy bay đến vị trí này
-        anime({
-          targets: rocket.position,
-          x: targetPosition.x,
-          y: targetPosition.y,
-          z: targetPosition.z,
-          easing: "easeInOutQuad", // Đặt kiểu easing theo ý muốn
-          duration: 2000, // Thời gian di chuyển (milliseconds)
-        });
-      }
+      let intersects = raycaster.intersectObjects([sphere]);
     });
 
-    // Tạo một SphereGeometry mới cho mặt trăng
     const moonGeometry = new SphereGeometry(8, 64, 64);
-    // Tạo một MeshPhysicalMaterial cho mặt trăng, có thể tùy chỉnh theo ý muốn
     moonMaterial = new MeshPhysicalMaterial({
-      color: new Color("#d4d4d4").convertSRGBToLinear(), // Màu của mặt trăng
-      roughness: 0.2, // Độ nhám
-      // envMap, // Sử dụng envMap của scene chính
-      envMapIntensity: 1, // Cường độ của envMap
+      color: new Color("#d4d4d4").convertSRGBToLinear(),
+      roughness: 0.2,
+      envMapIntensity: 1,
       map: textures.moonTexture,
     });
-    // Tạo mesh cho mặt trăng sử dụng geometry và material đã tạo
     moon = new Mesh(moonGeometry, moonMaterial);
-    // Đặt vị trí của mặt trăng kế bên trái địa cầu
-    moon.position.set(-30, 0, 0); // Điều chỉnh vị trí theo cần thiết
-    // Thêm mặt trăng vào scene
+    moon.position.set(-30, 0, 0);
     scene.add(moon);
   });
 
   let clock = new Clock();
-
   let daytime = true;
   let animating = false;
   let isNight = false;
-  //thay đổi ngày sang đêm và ngược lại
+
   window.addEventListener("mousemove", (e) => {
     if (animating) return;
 
@@ -303,20 +266,13 @@ let moonMaterial;
       t: anim,
       complete: () => {
         animating = false;
-
         daytime = !daytime;
       },
-
       update: () => {
         sunLight.intensity = 3.5 * (1 - obj.t);
         moonLight.intensity = 3.5 * obj.t;
-        console.log("thay đổi ngày sang đêm");
         sunLight.position.setY(20 * (1 - obj.t));
         moonLight.position.setY(20 * obj.t);
-
-        // const minMoonIntensity = 1;
-        // moonMaterial.envMapIntensity=minMoonIntensity;
-        console.log(moonMaterial);
 
         sphere.material.sheen = 1 - obj.t;
 
@@ -330,7 +286,7 @@ let moonMaterial;
           });
         });
 
-        ringsScene.children.forEach((child, i) => {
+        ringsScene.children.forEach((child) => {
           child.traverse((object) => {
             object.material.opacity =
               object.sunOpacity * (1 - obj.t) + object.moonOpacity * obj.t;
@@ -349,60 +305,9 @@ let moonMaterial;
   let moonRotation = 0;
   let newX = 0;
   let newZ = 0;
-  //loop every frames
+
   renderer.setAnimationLoop(() => {
     let delta = clock.getDelta();
-    if (rocket) {
-      let rocketPosition = new Vector3(5, 2, 0); // Đặt vị trí ban đầu của tên lửa (x, y, z)
-      rocketPosition.add(sphere.position); // Cộng với vị trí của địa cầu để đặt tên lửa lên trên địa cầu
-      rocket.position.copy(rocketPosition);
-      rocket.addEventListener("click", () => {
-        alert(`Bạn đã click vào máy bay `);
-      });
-    }
-
-    if (moon) {
-      const moonRotationSpeed = 0.2; // Tốc độ quay của mặt trăng, có thể điều chỉnh
-      moon.rotation.y += delta * moonRotationSpeed; // Delta là thời gian giữa các frame
-
-      // Đặt vị trí của mặt trăng quay quanh Trái Đất
-      const distanceFromEarth = 30; // Khoảng cách giữa Trái Đất và mặt trăng
-      const moonOrbitRadius = 50; // Bán kính quỹ đạo của mặt trăng quanh Trái Đất, có thể điều chỉnh
-      const moonOrbitSpeed = 0.3; // Tốc độ quay quanh Trái Đất, có thể điều chỉnh
-      const moonOrbitAngle = delta * moonOrbitSpeed; // Góc quay của mặt trăng quanh Trái Đất
-      const cosAngle = Math.cos(moonOrbitAngle);
-      const sinAngle = Math.sin(moonOrbitAngle);
-      newX = moon.position.x * cosAngle - moon.position.z * sinAngle;
-      newZ = moon.position.x * sinAngle + moon.position.z * cosAngle;
-      moon.position.set(newX, 0, newZ);
-      // console.log(moonMaterial.map);
-      moonMaterial.color = new Color("#d4d4d4").convertSRGBToLinear();
-    }
-
-    //set position for each plane
-    planesData.forEach((planeData) => {
-      let plane = planeData.group;
-      earthRotation += delta * 0.1; // Adjust the rotation speed as needed
-      // Điều chỉnh tốc độ quay theo ý muốn
-
-      plane.position.set(0, 0, 0);
-      plane.rotation.set(0, 0, 0);
-      plane.updateMatrixWorld();
-
-      //planeData.rot += delta * 0.25; ----> adjust to stand or move
-      // plane.rotateOnAxis(planeData.randomAxis, planeData.randomAxisRot); // random axis
-
-      // plane.rotateOnAxis(new Vector3(0, 1, 0), planeData.rot); // y-axis rotation
-      // plane.rotateOnAxis(new Vector3(0, 0, 1), planeData.rad); // this decides the radius
-      //-> to fix the initial position =>
-      plane.rotateOnAxis(new Vector3(0, 1, 0), 5); // y-axis rotation
-      plane.rotateOnAxis(new Vector3(0, 0, 1), 5); // this decides the radius
-      plane.translateY(planeData.yOff);
-      plane.rotateOnAxis(new Vector3(1, 0, 0), +Math.PI * 0.5);
-      sphere.rotation.y = earthRotation;
-    });
-    controls.update();
-    renderer.render(scene, camera);
 
     ring1.rotation.x = ring1.rotation.x * 0.95 + mousePos.y * 0.05 * 1.2;
     ring1.rotation.y = ring1.rotation.y * 0.95 + mousePos.x * 0.05 * 1.2;
@@ -413,6 +318,39 @@ let moonMaterial;
     ring3.rotation.x = ring3.rotation.x * 0.95 - mousePos.y * 0.05 * 0.275;
     ring3.rotation.y = ring3.rotation.y * 0.95 - mousePos.x * 0.05 * 0.275;
 
+    if (moon) {
+      const moonRotationSpeed = 0.2;
+      moon.rotation.y += delta * moonRotationSpeed;
+
+      const distanceFromEarth = 30;
+      const moonOrbitRadius = 50;
+      const moonOrbitSpeed = 0.3;
+      const moonOrbitAngle = delta * moonOrbitSpeed;
+      const cosAngle = Math.cos(moonOrbitAngle);
+      const sinAngle = Math.sin(moonOrbitAngle);
+      newX = moon.position.x * cosAngle - moon.position.z * sinAngle;
+      newZ = moon.position.x * sinAngle + moon.position.z * cosAngle;
+      moon.position.set(newX, 0, newZ);
+      moonMaterial.color = new Color("#d4d4d4").convertSRGBToLinear();
+    }
+
+    planesData.forEach((planeData) => {
+      let plane = planeData.group;
+      earthRotation += delta * 0.1;
+
+      plane.position.set(0, 0, 0);
+      plane.rotation.set(0, 0, 0);
+      plane.updateMatrixWorld();
+
+      plane.rotateOnAxis(new Vector3(0, 1, 0), 5);
+      plane.rotateOnAxis(new Vector3(0, 0, 1), 5);
+      plane.translateY(planeData.yOff);
+      plane.rotateOnAxis(new Vector3(1, 0, 0), +Math.PI * 0.5);
+      sphere.rotation.y = earthRotation;
+    });
+
+    controls.update();
+    renderer.render(scene, camera);
     renderer.autoClear = false;
     renderer.render(ringsScene, ringsCamera);
     renderer.autoClear = true;
@@ -421,7 +359,7 @@ let moonMaterial;
 
 // Biến toàn cục để theo dõi máy bay được chọn
 let selectedPlane = null;
-// Sửa đổi hàm makePlane để có thể nhận biết được khi máy bay được nhấn
+
 function makePlane(planeMesh, trailTexture, envMap, scene) {
   let plane = planeMesh.clone();
   let planeSize = 0.003;
@@ -462,7 +400,7 @@ function makePlane(planeMesh, trailTexture, envMap, scene) {
   group.add(plane);
   group.add(trail);
 
-  group.userData.isPlane = true; // Đánh dấu là máy bay
+  group.userData.isPlane = true;
 
   scene.add(group);
 
@@ -476,7 +414,6 @@ function makePlane(planeMesh, trailTexture, envMap, scene) {
   };
 }
 
-// Sự kiện nhấn chuột để chọn máy bay hoặc di chuyển máy bay được chọn
 renderer.domElement.addEventListener("click", function (event) {
   event.preventDefault();
 
@@ -485,19 +422,15 @@ renderer.domElement.addEventListener("click", function (event) {
     -(event.clientY / window.innerHeight) * 2 + 1
   );
 
-  // Initialize raycaster with the current mouse and camera position
   let raycaster = new Raycaster();
   raycaster.setFromCamera(mouse, camera);
 
-  // Calculate intersections with objects in the scene
   let intersects = raycaster.intersectObjects(scene.children, true);
 
   if (intersects.length > 0) {
     let intersectedObject = intersects[0].object;
 
-    // Check if the clicked object is a plane
     if (intersectedObject.parent && intersectedObject.parent.userData.isPlane) {
-      // Select the plane if no plane is currently selected
       if (!selectedPlane) {
         selectedPlane = intersectedObject.parent;
         console.log("Plane selected:", selectedPlane);
@@ -510,13 +443,15 @@ renderer.domElement.addEventListener("click", function (event) {
   }
 });
 
-// Hàm di chuyển máy bay đến vị trí mới
 function animatePlaneMovement(plane, targetPosition) {
-  // Khởi tạo hiệu ứng động cơ phát sáng và dấu vết khói
-  let engineGlow = createEngineGlow();
   let smokeTrail = createSmokeTrail();
-  plane.add(engineGlow);
   scene.add(smokeTrail);
+
+  const velocity = new Vector3(
+    (targetPosition.x - plane.position.x) / 20,
+    (targetPosition.y - plane.position.y) / 20,
+    (targetPosition.z - plane.position.z) / 20
+  );
 
   anime({
     targets: plane.position,
@@ -526,59 +461,44 @@ function animatePlaneMovement(plane, targetPosition) {
     easing: "easeInOutQuad",
     duration: 2000,
     update: function () {
-      // Cập nhật vị trí máy bay
-      plane.position.x += 0.1; // Ví dụ di chuyển máy bay
-      plane.position.y += 0.1; // Ví dụ di chuyển máy bay
-
-      // Di chuyển engine glow cùng với máy bay
-      if (plane.engineGlow) {
-        plane.engineGlow.position.copy(plane.position);
-        plane.engineGlow.position.z -= 2; // Giữ engine glow phía sau máy bay
-      }
-
-      // Cập nhật renderer
+      updateSmokeTrail(smokeTrail, plane.position, velocity);
       renderer.render(scene, camera);
-      updateSmokeTrail(smokeTrail, plane.position);
     },
     complete: function () {
-      plane.remove(engineGlow);
       scene.remove(smokeTrail);
-
       console.log("Hoàn thành di chuyển máy bay");
     },
   });
 }
 
-function createEngineGlow() {
-  // Đảm bảo rằng bạn có một hình ảnh phù hợp cho động cơ phát sáng, ví dụ 'engine_glow.png'
-  const textureLoader = new TextureLoader();
-  const glowTexture = textureLoader.load(""); // thay thế 'path_to_glow_effect_image.png' với đường dẫn chính xác
+function updateSmokeTrail(trail, position, velocity) {
+  const positions = trail.geometry.attributes.position.array;
+  const length = positions.length / 3;
+  const randomnessFactor = 0.1;
 
-  const spriteMaterial = new SpriteMaterial({
-    map: glowTexture,
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.75,
-  });
+  for (let i = length - 1; i > 0; i--) {
+    positions[i * 3] =
+      positions[(i - 1) * 3] + (Math.random() - 0.5) * randomnessFactor;
+    positions[i * 3 + 1] =
+      positions[(i - 1) * 3 + 1] + (Math.random() - 0.5) * randomnessFactor;
+    positions[i * 3 + 2] =
+      positions[(i - 1) * 3 + 2] + (Math.random() - 0.5) * randomnessFactor;
+  }
 
-  const sprite = new Sprite(spriteMaterial);
-  sprite.scale.set(2, 2, 2); // Kích thước phù hợp
-  sprite.position.set(0, 0, -2); // Vị trí phía sau máy bay
-  return sprite;
+  positions[0] =
+    position.x - velocity.x * 2 + (Math.random() - 0.5) * randomnessFactor;
+  positions[1] =
+    position.y - velocity.y * 2 + (Math.random() - 0.5) * randomnessFactor;
+  positions[2] =
+    position.z - velocity.z * 2 + (Math.random() - 0.5) * randomnessFactor;
+
+  trail.geometry.attributes.position.needsUpdate = true;
 }
 
 function nr() {
   return Math.random() * 2 - 1;
 }
 
-// Hàm xử lý khi click vào máy bay
-function handlePlaneClick() {
-  alert("Bạn đã click vào máy bay!");
-}
-function updateSmokeTrail(trail, position) {
-  trail.geometry.attributes.position.needsUpdate = true; // Important to update positions
-  trail.position.copy(position);
-}
 function createSmokeTrail() {
   let geometry = new BufferGeometry();
   let vertices = [];
@@ -596,33 +516,3 @@ function createSmokeTrail() {
 
   return new Points(geometry, material);
 }
-
-// Hàm xử lý khi click vào vệ tinh
-// function handleSatelliteClick() {
-//   alert("Bạn đã click vào vệ tinh!");
-// }
-// function animatePlaneAlongCurve(
-//   plane,
-//   startPosition,
-//   endPosition,
-//   earthRadius
-// ) {
-//   let curve = new THREE.QuadraticBezierCurve3(
-//     startPosition,
-//     new THREE.Vector3(0, earthRadius + 10, 0), // Điểm giữa nâng cao để tạo độ cong
-//     endPosition
-//   );
-
-//   let points = curve.getPoints(50); // Tạo 50 điểm trên đường cong
-//   let index = 0;
-
-//   function movePlane() {
-//     if (index < points.length) {
-//       plane.position.copy(points[index]);
-//       index++;
-//       requestAnimationFrame(movePlane); // Tiếp tục di chuyển máy bay trên đường cong
-//     }
-//   }
-
-//   movePlane(); // Bắt đầu di chuyển máy bay
-// }
