@@ -29,11 +29,16 @@ import {
   PointsMaterial,
   Points,
   MeshPhongMaterial,
+  Audio,
+  AudioListener,
+  AudioLoader,
+  Quaternion,
 } from "https://cdn.skypack.dev/three@0.137";
 import { OrbitControls } from "https://cdn.skypack.dev/three-stdlib@2.8.5/controls/OrbitControls";
 import { RGBELoader } from "https://cdn.skypack.dev/three-stdlib@2.8.5/loaders/RGBELoader";
 import { GLTFLoader } from "https://cdn.skypack.dev/three-stdlib@2.8.5/loaders/GLTFLoader";
 import anime from "https://cdn.skypack.dev/animejs@3.2.1";
+import { QuadraticBezierCurve3 } from "https://cdn.skypack.dev/three@0.137";
 
 // Declare the background
 let sunBackground = document.querySelector(".sun-background");
@@ -101,6 +106,18 @@ moonLight.shadow.camera.top = 10;
 moonLight.shadow.camera.right = 10;
 scene.add(moonLight);
 
+// Set up audio listener and audio
+const listener = new AudioListener();
+camera.add(listener);
+
+const sound = new Audio(listener);
+const audioLoader = new AudioLoader();
+audioLoader.load("assets/plane-sound.mp3", function (buffer) {
+  sound.setBuffer(buffer);
+  sound.setLoop(true);
+  sound.setVolume(0.5);
+});
+
 let mousePos = new Vector2(0, 0);
 
 window.addEventListener("mousemove", (e) => {
@@ -166,7 +183,6 @@ var ring1,
   ringsScene.add(ring3);
 
   let textures = {
-    // thanks to https://free3d.com/user/ali_alkendi !
     bump: await new TextureLoader().loadAsync("assets/earthbump.jpg"),
     map: await new TextureLoader().loadAsync("assets/Earth_Texture_Full.jpg"),
     spec: await new TextureLoader().loadAsync("assets/earthspec.jpg"),
@@ -175,8 +191,9 @@ var ring1,
   };
 
   // Create planes fly around earth
-  let plane = (await new GLTFLoader().loadAsync("assets/plane/scene.glb")).scene
-    .children[0];
+  let plane = (
+    await new GLTFLoader().loadAsync("assets/plane/11805_airplane_v2_L2.glb")
+  ).scene.children[0];
   let planesData = [makePlane(plane, textures.planeTrailMask, envMap, scene)];
 
   let sphere = new Mesh(
@@ -200,7 +217,7 @@ var ring1,
   sphere.receiveShadow = true;
   scene.add(sphere);
 
-  // Load model tên lửa
+  // Load model vệ tinh
   let satelite;
   const gltfLoader = new GLTFLoader();
   gltfLoader.load("assets/plane/satelite.glb", (gltf) => {
@@ -362,10 +379,10 @@ let selectedPlane = null;
 
 function makePlane(planeMesh, trailTexture, envMap, scene) {
   let plane = planeMesh.clone();
-  let planeSize = 0.003;
+  let planeSize = 0.002;
   plane.scale.set(planeSize, planeSize, planeSize);
   plane.position.set(0, 0, 0);
-  plane.rotation.set(0, 0, 0);
+  plane.rotation.set(0, 3.1, 0);
   plane.updateMatrixWorld();
 
   plane.traverse((object) => {
@@ -414,6 +431,34 @@ function makePlane(planeMesh, trailTexture, envMap, scene) {
   };
 }
 
+renderer.domElement.addEventListener("mousemove", function (event) {
+  let mouse = new Vector2(
+    (event.clientX / window.innerWidth) * 2 - 1,
+    -(event.clientY / window.innerHeight) * 2 + 1
+  );
+
+  let raycaster = new Raycaster();
+  raycaster.setFromCamera(mouse, camera);
+
+  let intersects = raycaster.intersectObjects(scene.children, true);
+
+  let isHoveringPlane = false;
+
+  if (intersects.length > 0) {
+    let intersectedObject = intersects[0].object;
+
+    if (intersectedObject.parent && intersectedObject.parent.userData.isPlane) {
+      isHoveringPlane = true;
+    }
+  }
+
+  if (isHoveringPlane) {
+    renderer.domElement.style.cursor = "pointer";
+  } else {
+    renderer.domElement.style.cursor = "default";
+  }
+});
+
 renderer.domElement.addEventListener("click", function (event) {
   event.preventDefault();
 
@@ -434,6 +479,9 @@ renderer.domElement.addEventListener("click", function (event) {
       if (!selectedPlane) {
         selectedPlane = intersectedObject.parent;
         console.log("Plane selected:", selectedPlane);
+        setTimeout(() => {
+          sound.play(); // Bắt đầu phát âm thanh sau 0.5 giây khi chọn máy bay
+        }, 500);
       }
     } else if (selectedPlane) {
       let targetPosition = intersects[0].point;
@@ -447,28 +495,80 @@ function animatePlaneMovement(plane, targetPosition) {
   let smokeTrail = createSmokeTrail();
   scene.add(smokeTrail);
 
-  const velocity = new Vector3(
-    (targetPosition.x - plane.position.x) / 20,
-    (targetPosition.y - plane.position.y) / 20,
-    (targetPosition.z - plane.position.z) / 20
-  );
+  const start = plane.position.clone();
+  const radius = 10; // Radius of the Earth sphere
 
-  anime({
-    targets: plane.position,
-    x: targetPosition.x,
-    y: targetPosition.y,
-    z: targetPosition.z,
-    easing: "easeInOutQuad",
-    duration: 2000,
-    update: function () {
-      updateSmokeTrail(smokeTrail, plane.position, velocity);
+  // Convert Cartesian coordinates to spherical coordinates
+  function toSpherical(cartesian) {
+    const radius = Math.sqrt(
+      cartesian.x * cartesian.x +
+        cartesian.y * cartesian.y +
+        cartesian.z * cartesian.z
+    );
+    const theta = Math.acos(cartesian.y / radius); // Polar angle
+    const phi = Math.atan2(cartesian.z, cartesian.x); // Azimuthal angle
+    return { radius, theta, phi };
+  }
+
+  // Convert spherical coordinates back to Cartesian coordinates
+  function toCartesian(spherical) {
+    const { radius, theta, phi } = spherical;
+    return new Vector3(
+      radius * Math.sin(theta) * Math.cos(phi),
+      radius * Math.cos(theta),
+      radius * Math.sin(theta) * Math.sin(phi)
+    );
+  }
+
+  const startSpherical = toSpherical(start);
+  const endSpherical = toSpherical(targetPosition);
+
+  // Generate intermediate points along the great circle path
+  const points = [];
+  const numPoints = 100; // Number of intermediate points
+  for (let i = 0; i <= numPoints; i++) {
+    const t = i / numPoints;
+    const intermediateSpherical = {
+      radius: radius + 1.5, // Adjust the radius to make the plane fly higher
+      theta: startSpherical.theta * (1 - t) + endSpherical.theta * t,
+      phi: startSpherical.phi * (1 - t) + endSpherical.phi * t,
+    };
+    points.push(toCartesian(intermediateSpherical));
+  }
+
+  let index = 0;
+
+  const animate = () => {
+    if (index < points.length) {
+      plane.position.copy(points[index]);
+
+      // Adjust plane orientation to follow the curve
+      if (index > 0) {
+        const prevPoint = points[index - 1];
+        const direction = points[index].clone().sub(prevPoint).normalize();
+        const quaternion = new Quaternion().setFromUnitVectors(
+          new Vector3(0, 1, 0),
+          direction
+        );
+        plane.setRotationFromQuaternion(quaternion);
+      }
+
+      updateSmokeTrail(
+        smokeTrail,
+        plane.position,
+        points[index].clone().sub(plane.position)
+      );
       renderer.render(scene, camera);
-    },
-    complete: function () {
+      index++;
+      requestAnimationFrame(animate);
+    } else {
       scene.remove(smokeTrail);
+      sound.stop(); // Dừng âm thanh khi hoàn thành di chuyển
       console.log("Hoàn thành di chuyển máy bay");
-    },
-  });
+    }
+  };
+
+  animate();
 }
 
 function updateSmokeTrail(trail, position, velocity) {
