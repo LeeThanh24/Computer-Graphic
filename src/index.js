@@ -431,6 +431,7 @@ function makePlane(planeMesh, trailTexture, envMap, scene) {
   };
 }
 
+
 renderer.domElement.addEventListener("mousemove", function (event) {
   let mouse = new Vector2(
     (event.clientX / window.innerWidth) * 2 - 1,
@@ -490,7 +491,7 @@ renderer.domElement.addEventListener("click", function (event) {
     }
   }
 });
-
+var numPoints = 300;
 function animatePlaneMovement(plane, targetPosition) {
   let smokeTrail = createSmokeTrail();
   scene.add(smokeTrail);
@@ -525,7 +526,7 @@ function animatePlaneMovement(plane, targetPosition) {
 
   // Generate intermediate points along the great circle path
   const points = [];
-  const numPoints = 100; // Number of intermediate points
+  // numPoints = 300; // Number of intermediate points => increase this to speedup plane 
   for (let i = 0; i <= numPoints; i++) {
     const t = i / numPoints;
     const intermediateSpherical = {
@@ -560,6 +561,7 @@ function animatePlaneMovement(plane, targetPosition) {
       );
       renderer.render(scene, camera);
       index++;
+      // Add a delay to slow down the animation
       requestAnimationFrame(animate);
     } else {
       scene.remove(smokeTrail);
@@ -616,3 +618,32 @@ function createSmokeTrail() {
 
   return new Points(geometry, material);
 }
+
+export function selectSpeed(element) {
+  var siblings = element.parentNode.children;
+  let speed = element.querySelector('p').innerHTML;
+  console.log(speed);
+ 
+  switch (speed) {
+    case "1x":
+      numPoints =  300;
+      break;
+    case "2x":
+      numPoints =  600;
+      break;
+    case "3x":
+      numPoints =  900;
+      break;
+    default:
+      numPoints =  300;
+      
+  }
+  for (var i = 0; i < siblings.length; i++) {
+    siblings[i].classList.remove("selected");
+  }
+  element.classList.add("selected");
+}
+
+// Đăng ký hàm selectSpeed làm global function
+window.selectSpeed = selectSpeed;
+
