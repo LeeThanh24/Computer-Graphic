@@ -10,17 +10,17 @@ input {
 }
 
 .display {
-  width: 30%;
-  /* height: 0vh; */
+  width: 40%;
+  /* height: 100vh; */
   display: flex;
-  /* align-items: center; */
+  align-items: center;
   justify-content: center;
   background: white;
 }
 
 label {
   width: 200px;
-  height: 50px;
+  height: 100px;
   border-radius: 999px;
   background: #f3f3f3;
   box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.05) inset;
@@ -29,8 +29,8 @@ label {
 }
 
 .circle {
-  width: 80px;
-  height: 30px;
+  width: 100px;
+  height: 100px;
   border-radius: 99px;
   background: white;
   box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.05),
@@ -44,13 +44,12 @@ label {
   justify-content: center;
   overflow: hidden;
 }
-
 svg {
   width: 80px;
   position: absolute;
 }
 .sun {
-  color: #ffd600;
+  /* color: #ffd600; */
   margin-top: 0%;
   opacity: 1;
 }
