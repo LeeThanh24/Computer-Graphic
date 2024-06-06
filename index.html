@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="testButton/style.css" />
     <title>Document</title>
 
     <style>
@@ -42,10 +43,85 @@
         right: 0; /* Đẩy popup sang bên phải */
         width: 300px; /* Đặt chiều rộng cho popup */
         height: 100vh; /* Đặt chiều cao bằng với 100% viewport height */
-        background: white; /* Nền trắng cho popup */
+        /* Nền trắng cho popup */
         padding: 20px; /* Đệm trong cho nội dung */
-        box-shadow: -10px 0 20px rgba(0, 0, 0, 0.1); /* Thêm bóng cho đẹp */
         z-index: 100; /* Đảm bảo popup nằm trên các thành phần khác */
+      }
+
+      .center-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 25px 40px;
+        font-size: 20px;
+        font-weight: bold;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 100px;
+        cursor: pointer;
+        z-index: 101; /* Đảm bảo button nằm trên các thành phần khác */
+      }
+
+      .top-left-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 101; /* Đảm bảo button nằm trên các thành phần khác */
+        margin-left: 200px;
+      }
+
+      .innerDiv {
+        background-color: white;
+        margin-bottom: 100px;
+        border-radius: 20px;
+        font-family: verdana;
+        font-weight: bolder;
+        padding-top: 10px;
+        text-align: center;
+        padding-bottom: 100px;
+        font-size: large;
+      }
+
+      .innerDiv:nth-child(2) {
+        padding-bottom: 25px;
+      }
+
+      .innerDiv:nth-child(3) {
+        padding-bottom: 25px;
+      }
+      .innerDiv:nth-child(3) div {
+        background: black;
+        color: white;
+        padding: 10px;
+        font-size: medium;
+        font-weight: normal;
+      }
+
+      .innerDivContainer {
+        display: flex;
+        justify-content: center;
+        /* margin: 0px 10px; Khoảng cách giữa các phần tử div */
+      }
+
+      .innerDivContainer div {
+        font-weight: normal;
+        margin: 0px 10px; /*Khoảng cách giữa các phần tử div */
+        cursor: pointer;
+        padding: 0px 20px;
+      }
+
+      .selected {
+        background-color: black;
+        color: white;
       }
     </style>
 
@@ -56,25 +132,56 @@
     <!-- change from day (sun) to night (moon)  -->
     <div class="sun-background"></div>
     <div class="moon-background"></div>
+    <button class="center-button" onclick="togglePopup()">Flight</button>
+    <input type="checkbox" id="toggle" />
 
-    <!-- Popup Element -->
-    <div id="planePopup">
-      <p>Thông tin máy bay : VNA6969</p>
-      <button onclick="closePopup()">Đóng</button>
+    <div class="display">
+      <label for="toggle">
+        <div class="circle"></div>
+      </label>
     </div>
-
+    <!-- <button class="top-left-button" onclick="topLeftButtonClick()">Menu</button> -->
+    <!-- Popup -->
+    <div id="planePopup">
+      <div class="innerDiv">
+        <p>Flight information</p>
+      </div>
+      <div class="innerDiv">
+        <p>Speed</p>
+        <div class="innerDivContainer">
+          <div onclick="selectSpeed(this)"><p>1x</p></div>
+          <div onclick="selectSpeed(this)"><p>2x</p></div>
+          <div onclick="selectSpeed(this)"><p>3x</p></div>
+        </div>
+      </div>
+      <div class="innerDiv">
+        <p>Plane</p>
+        <div>Airbus 370</div>
+      </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/three@0.137/build/three.min.js"></script>
 
     <script>
-      //hiển thị thông tin
-      // function showPopup() {
-      //   document.getElementById('planePopup').style.display = 'block';
-      // }
+      function togglePopup() {
+        var popup = document.getElementById("planePopup");
+        if (popup.style.display === "none" || popup.style.display === "") {
+          popup.style.display = "block";
+        } else {
+          popup.style.display = "none";
+        }
+      }
 
-      // // Hàm để đóng popup
-      // function closePopup() {
-      //   document.getElementById('planePopup').style.display = 'none';
-      // }
+      function selectSpeed(element) {
+        var siblings = element.parentNode.children;
+        for (var i = 0; i < siblings.length; i++) {
+          siblings[i].classList.remove("selected");
+        }
+        element.classList.add("selected");
+      }
+
+      function topLeftButtonClick() {
+        alert("Top left button clicked!");
+      }
     </script>
   </body>
 </html>
