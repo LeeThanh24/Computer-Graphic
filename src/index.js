@@ -330,14 +330,7 @@ let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển c�
   renderer.setAnimationLoop(() => {
     let delta = clock.getDelta();
 
-    ring1.rotation.x = ring1.rotation.x * 0.95 + mousePos.y * 0.05 * 1.2;
-    ring1.rotation.y = ring1.rotation.y * 0.95 + mousePos.x * 0.05 * 1.2;
-
-    ring2.rotation.x = ring2.rotation.x * 0.95 + mousePos.y * 0.05 * 0.375;
-    ring2.rotation.y = ring2.rotation.y * 0.95 + mousePos.x * 0.05 * 0.375;
-
-    ring3.rotation.x = ring3.rotation.x * 0.95 - mousePos.y * 0.05 * 0.275;
-    ring3.rotation.y = ring3.rotation.y * 0.95 - mousePos.x * 0.05 * 0.275;
+    ringScene();
 
     if (moon) {
       const moonRotationSpeed = 0.2;
@@ -596,6 +589,7 @@ function animatePlaneMovement(plane, targetPosition) {
   isPlaneMoving = true; // Đặt cờ khi bắt đầu di chuyển
 
   const animate = () => {
+    ringScene();
     if (index < points.length) {
       plane.position.copy(points[index]);
 
@@ -616,7 +610,6 @@ function animatePlaneMovement(plane, targetPosition) {
         points[index].clone().sub(plane.position)
       );
 
-      renderer.render(scene, camera);
       index++;
       // Add a delay to slow down the animation
       requestAnimationFrame(animate);
@@ -631,7 +624,6 @@ function animatePlaneMovement(plane, targetPosition) {
       );
 
       isPlaneMoving = false; // Đặt cờ khi kết thúc di chuyển
-      renderer.render(scene, camera); // Gọi lại hàm render để cập nhật HTML
     }
   };
 
@@ -770,4 +762,15 @@ export function startFlight() {
   } else {
     console.log("Plane or target position not selected");
   }
+}
+
+function ringScene() {
+  ring1.rotation.x = ring1.rotation.x * 0.95 + mousePos.y * 0.05 * 1.2;
+  ring1.rotation.y = ring1.rotation.y * 0.95 + mousePos.x * 0.05 * 1.2;
+
+  ring2.rotation.x = ring2.rotation.x * 0.95 + mousePos.y * 0.05 * 0.375;
+  ring2.rotation.y = ring2.rotation.y * 0.95 + mousePos.x * 0.05 * 0.375;
+
+  ring3.rotation.x = ring3.rotation.x * 0.95 - mousePos.y * 0.05 * 0.275;
+  ring3.rotation.y = ring3.rotation.y * 0.95 - mousePos.x * 0.05 * 0.275;
 }
