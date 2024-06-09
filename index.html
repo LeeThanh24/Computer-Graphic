@@ -1,217 +1,311 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="testButton/style.css" />
+    <title>Document</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="testButton/style.css" />
-  <title>Document</title>
-
-  <style>
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .sun-background {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(45deg, rgb(255 219 158), rgb(253 243 220));
-      opacity: 1;
-    }
-
-    .moon-background {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(313deg, #0b1a2b 33%, #3a6291 111%);
-      opacity: 0;
-    }
-
-    /* ensure that the background is always behind the earth */
-    canvas {
-      position: relative;
-    }
-
-    #planePopup {
-      display: none;
-      /* Ẩn popup khi chưa được gọi */
-      position: fixed;
-      /* Dính popup vào vị trí cố định trên màn hình */
-      top: 0;
-      /* Đặt ở đầu trang */
-      right: 0;
-      /* Đẩy popup sang bên phải */
-      width: 300px;
-      /* Đặt chiều rộng cho popup */
-      height: 100vh;
-      /* Đặt chiều cao bằng với 100% viewport height */
-      /* Nền trắng cho popup */
-      padding: 20px;
-      /* Đệm trong cho nội dung */
-      z-index: 100;
-      /* Đảm bảo popup nằm trên các thành phần khác */
-    }
-
-    .center-button {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 25px 40px;
-      font-size: 20px;
-      font-weight: bold;
-      background-color: black;
-      color: white;
-      border: none;
-      border-radius: 100px;
-      cursor: pointer;
-      z-index: 101;
-      /* Đảm bảo button nằm trên các thành phần khác */
-    }
-
-    .top-left-button {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: black;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      z-index: 101;
-      /* Đảm bảo button nằm trên các thành phần khác */
-      margin-left: 200px;
-    }
-
-    .innerDiv {
-      background-color: white;
-      margin-bottom: 100px;
-      border-radius: 20px;
-      font-family: verdana;
-      font-weight: bolder;
-      padding-top: 10px;
-      text-align: center;
-      padding-bottom: 100px;
-      font-size: large;
-    }
-
-    .innerDiv p {
-      margin-bottom: 10px;
-    }
-
-    .innerDiv:nth-child(2) {
-      padding-bottom: 25px;
-    }
-
-    .innerDiv:nth-child(3) {
-      padding-bottom: 25px;
-    }
-
-    .innerDiv:nth-child(3) div {
-      background: black;
-      color: white;
-      padding: 10px;
-      font-size: medium;
-      font-weight: normal;
-    }
-
-    .innerDivContainer {
-      display: flex;
-      justify-content: center;
-      /* margin: 0px 10px; Khoảng cách giữa các phần tử div */
-    }
-
-    .innerDivContainer div {
-      font-weight: normal;
-      margin: 0px 10px;
-      /*Khoảng cách giữa các phần tử div */
-      cursor: pointer;
-      padding: 0px 20px;
-    }
-
-    .selected {
-      background-color: black;
-      color: white;
-    }
-  </style>
-
-  <script type="module" src="src/index.js"></script>
-</head>
-
-<body>
-  <!-- change from day (sun) to night (moon)  -->
-  <div class="sun-background"></div>
-  <div class="moon-background"></div>
-  <button class="center-button" onclick="togglePopup()">Flight</button>
-  <input type="checkbox" id="toggle" />
-
-  <div class="display">
-    <label for="toggle">
-      <div class="circle">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="sun size-4">
-          <path
-            d="M15.75 8.25a.75.75 0 0 1 .75.75c0 1.12-.492 2.126-1.27 2.812a.75.75 0 1 1-.992-1.124A2.243 2.243 0 0 0 15 9a.75.75 0 0 1 .75-.75Z" />
-          <path fill-rule="evenodd"
-            d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM4.575 15.6a8.25 8.25 0 0 0 9.348 4.425 1.966 1.966 0 0 0-1.84-1.275.983.983 0 0 1-.97-.822l-.073-.437c-.094-.565.25-1.11.8-1.267l.99-.282c.427-.123.783-.418.982-.816l.036-.073a1.453 1.453 0 0 1 2.328-.377L16.5 15h.628a2.25 2.25 0 0 1 1.983 1.186 8.25 8.25 0 0 0-6.345-12.4c.044.262.18.503.389.676l1.068.89c.442.369.535 1.01.216 1.49l-.51.766a2.25 2.25 0 0 1-1.161.886l-.143.048a1.107 1.107 0 0 0-.57 1.664c.369.555.169 1.307-.427 1.605L9 13.125l.423 1.059a.956.956 0 0 1-1.652.928l-.679-.906a1.125 1.125 0 0 0-1.906.172L4.575 15.6Z"
-            clip-rule="evenodd" />
-        </svg>
-
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="moon size-4">
-          <path
-            d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-        </svg>
-      </div>
-    </label>
-  </div>
-  <!-- Popup -->
-  <div id="planePopup">
-    <div class="innerDiv">
-      <p>Flight information</p>
-    </div>
-    <div class="innerDiv">
-      <p>Speed</p>
-      <div class="innerDivContainer">
-        <div onclick="selectSpeed(this)">
-          <p>1x</p>
-        </div>
-        <div onclick="selectSpeed(this)">
-          <p>2x</p>
-        </div>
-        <div onclick="selectSpeed(this)">
-          <p>3x</p>
-        </div>
-      </div>
-    </div>
-    <div class="innerDiv">
-      <p>Plane</p>
-      <div>Airbus 370</div>
-    </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.137/build/three.min.js"></script>
-
-  <script>
-    function togglePopup() {
-      var popup = document.getElementById("planePopup");
-      if (popup.style.display === "none" || popup.style.display === "") {
-        popup.style.display = "block";
-      } else {
-        popup.style.display = "none";
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
       }
-    }
 
-    
+      .sun-background {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, rgb(255 219 158), rgb(253 243 220));
+        opacity: 1;
+      }
 
-    function topLeftButtonClick() {
-      alert("Top left button clicked!");
-    }
-  </script>
-</body>
+      .moon-background {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(313deg, #0b1a2b 33%, #3a6291 111%);
+        opacity: 0;
+      }
 
+      /* ensure that the background is always behind the earth */
+      canvas {
+        position: relative;
+      }
+
+      #planePopup {
+        display: none;
+        /* Ẩn popup khi chưa được gọi */
+        position: fixed;
+        /* Dính popup vào vị trí cố định trên màn hình */
+        top: 0;
+        /* Đặt ở đầu trang */
+        right: 0;
+        /* Đẩy popup sang bên phải */
+        width: 300px;
+        /* Đặt chiều rộng cho popup */
+        height: 100vh;
+        /* Đặt chiều cao bằng với 100% viewport height */
+        /* Nền trắng cho popup */
+        padding: 20px;
+        /* Đệm trong cho nội dung */
+        z-index: 100;
+        /* Đảm bảo popup nằm trên các thành phần khác */
+      }
+
+      .center-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 25px 40px;
+        font-size: 20px;
+        font-weight: bold;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 100px;
+        cursor: pointer;
+        z-index: 101;
+        /* Đảm bảo button nằm trên các thành phần khác */
+      }
+
+      .top-left-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 101;
+        /* Đảm bảo button nằm trên các thành phần khác */
+        margin-left: 200px;
+      }
+
+      .innerDiv {
+        background-color: white;
+        margin-bottom: 100px;
+        border-radius: 20px;
+        font-family: verdana;
+        font-weight: bolder;
+        padding: 10px;
+        text-align: center;
+        padding-bottom: 100px;
+        font-size: large;
+        border: 2px solid;
+      }
+
+      .innerDiv p {
+        margin-bottom: 10px;
+      }
+
+      .innerDiv:first-child {
+        padding-bottom: 0px;
+      }
+
+      .innerDiv:nth-child(2) {
+        padding-bottom: 25px;
+      }
+
+      .innerDiv:nth-child(3) {
+        padding-bottom: 25px;
+      }
+
+      .innerDiv:nth-child(3) div {
+        background: black;
+        color: white;
+        padding: 10px;
+        font-size: medium;
+        font-weight: normal;
+      }
+
+      .innerDivContainer {
+        display: flex;
+        justify-content: center;
+        /* margin: 0px 10px; Khoảng cách giữa các phần tử div */
+      }
+
+      .innerDivContainer div {
+        font-weight: normal;
+        margin: 0px 10px;
+        /*Khoảng cách giữa các phần tử div */
+        cursor: pointer;
+        padding: 0px 20px;
+      }
+
+      .selected {
+        background-color: black;
+        color: white;
+      }
+
+      .flight-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .flight-info img {
+        width: 30px;
+        height: 30px;
+        margin-right: 10px;
+      }
+
+      .flight-info div {
+        flex-grow: 1;
+        text-align: left;
+      }
+
+      .flight-info {
+        text-align: center;
+      }
+
+      .flight-info div {
+        background-color: #d9d9d9;
+        padding: 4px;
+      }
+
+      .flight-info div span {
+        font-weight: normal;
+      }
+
+      .flight-info button {
+        background-color: black; /* Green */
+        border: none;
+        color: white;
+        padding: 10px 32px;
+        text-align: center;
+        text-decoration: none;
+        /* display: inline-block; */
+        font-size: 16px;
+        width: 100%;
+        cursor: pointer;
+      }
+    </style>
+
+    <script type="module" src="src/index.js"></script>
+  </head>
+
+  <body>
+    <!-- change from day (sun) to night (moon)  -->
+    <div class="sun-background"></div>
+    <div class="moon-background"></div>
+    <button class="center-button" onclick="togglePopup()">Flight</button>
+    <input type="checkbox" id="toggle" />
+
+    <div class="display">
+      <label for="toggle">
+        <div class="circle">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="sun size-4"
+          >
+            <path
+              d="M15.75 8.25a.75.75 0 0 1 .75.75c0 1.12-.492 2.126-1.27 2.812a.75.75 0 1 1-.992-1.124A2.243 2.243 0 0 0 15 9a.75.75 0 0 1 .75-.75Z"
+            />
+            <path
+              fill-rule="evenodd"
+              d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM4.575 15.6a8.25 8.25 0 0 0 9.348 4.425 1.966 1.966 0 0 0-1.84-1.275.983.983 0 0 1-.97-.822l-.073-.437c-.094-.565.25-1.11.8-1.267l.99-.282c.427-.123.783-.418.982-.816l.036-.073a1.453 1.453 0 0 1 2.328-.377L16.5 15h.628a2.25 2.25 0 0 1 1.983 1.186 8.25 8.25 0 0 0-6.345-12.4c.044.262.18.503.389.676l1.068.89c.442.369.535 1.01.216 1.49l-.51.766a2.25 2.25 0 0 1-1.161.886l-.143.048a1.107 1.107 0 0 0-.57 1.664c.369.555.169 1.307-.427 1.605L9 13.125l.423 1.059a.956.956 0 0 1-1.652.928l-.679-.906a1.125 1.125 0 0 0-1.906.172L4.575 15.6Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="moon size-4"
+          >
+            <path
+              d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z"
+            />
+          </svg>
+        </div>
+      </label>
+    </div>
+    <!-- Popup -->
+    <div id="planePopup">
+      <div class="innerDiv">
+        <p>Flight information</p>
+        <div class="flight-info">
+          <img src="assets/start.png" alt="start" />
+          <div>
+            <span>From</span><br />
+            SG, <span>Viet Nam</span>
+          </div>
+        </div>
+        <div class="flight-info">
+          <img src="assets/transition.png" alt="transition" />
+          <div>
+            <span>Transition</span><br />
+            Seoul, <span>Korea</span>
+          </div>
+        </div>
+        <div class="flight-info">
+          <img src="assets/end.png" alt="end" />
+          <div>
+            <span>To</span><br />
+            Paris, <span>France</span>
+          </div>
+        </div>
+        <div class="flight-info">
+          <img src="assets/distance.png" alt="distance" />
+          <div>1200<span> Km</span></div>
+        </div>
+        <div class="flight-info">
+          <img src="assets/clock-icon-symbol-sign-vector.jpg" alt="clock" />
+          <div>12<span> Hrs</span></div>
+        </div>
+        <div class="flight-info">
+          <button onclick="start()"><b>Start</b></button>
+        </div>
+      </div>
+      <div class="innerDiv">
+        <p>Speed</p>
+        <div class="innerDivContainer">
+          <div onclick="selectSpeed(this)">
+            <p>1x</p>
+          </div>
+          <div onclick="selectSpeed(this)">
+            <p>2x</p>
+          </div>
+          <div onclick="selectSpeed(this)">
+            <p>3x</p>
+          </div>
+        </div>
+      </div>
+      <div class="innerDiv">
+        <p>Plane</p>
+        <div>Airbus 370</div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.137/build/three.min.js"></script>
+
+    <script>
+      function togglePopup() {
+        var popup = document.getElementById("planePopup");
+        if (popup.style.display === "none" || popup.style.display === "") {
+          popup.style.display = "block";
+        } else {
+          popup.style.display = "none";
+        }
+      }
+
+      function topLeftButtonClick() {
+        alert("Top left button clicked!");
+      }
+
+      function start() {
+        console.log("start flying");
+      }
+    </script>
+  </body>
 </html>
