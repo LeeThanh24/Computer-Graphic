@@ -37,15 +37,23 @@
       }
 
       #planePopup {
-        display: none; /* Ẩn popup khi chưa được gọi */
-        position: fixed; /* Dính popup vào vị trí cố định trên màn hình */
-        top: 0; /* Đặt ở đầu trang */
-        right: 0; /* Đẩy popup sang bên phải */
-        width: 300px; /* Đặt chiều rộng cho popup */
-        height: 100vh; /* Đặt chiều cao bằng với 100% viewport height */
+        display: none;
+        /* Ẩn popup khi chưa được gọi */
+        position: fixed;
+        /* Dính popup vào vị trí cố định trên màn hình */
+        top: 0;
+        /* Đặt ở đầu trang */
+        right: 0;
+        /* Đẩy popup sang bên phải */
+        width: 300px;
+        /* Đặt chiều rộng cho popup */
+        height: 100vh;
+        /* Đặt chiều cao bằng với 100% viewport height */
         /* Nền trắng cho popup */
-        padding: 20px; /* Đệm trong cho nội dung */
-        z-index: 100; /* Đảm bảo popup nằm trên các thành phần khác */
+        padding: 20px;
+        /* Đệm trong cho nội dung */
+        z-index: 100;
+        /* Đảm bảo popup nằm trên các thành phần khác */
       }
 
       .center-button {
@@ -61,7 +69,8 @@
         border: none;
         border-radius: 100px;
         cursor: pointer;
-        z-index: 101; /* Đảm bảo button nằm trên các thành phần khác */
+        z-index: 101;
+        /* Đảm bảo button nằm trên các thành phần khác */
       }
 
       .top-left-button {
@@ -75,7 +84,8 @@
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        z-index: 101; /* Đảm bảo button nằm trên các thành phần khác */
+        z-index: 101;
+        /* Đảm bảo button nằm trên các thành phần khác */
         margin-left: 200px;
       }
 
@@ -85,15 +95,21 @@
         border-radius: 20px;
         font-family: verdana;
         font-weight: bolder;
-        padding-top: 10px;
+        padding: 10px;
         text-align: center;
         padding-bottom: 100px;
         font-size: large;
+        border: 2px solid;
       }
 
       .innerDiv p {
         margin-bottom: 10px;
       }
+
+      .innerDiv:first-child {
+        padding-bottom: 0px;
+      }
+
       .innerDiv:nth-child(2) {
         padding-bottom: 25px;
       }
@@ -101,6 +117,7 @@
       .innerDiv:nth-child(3) {
         padding-bottom: 25px;
       }
+
       .innerDiv:nth-child(3) div {
         background: black;
         color: white;
@@ -117,7 +134,8 @@
 
       .innerDivContainer div {
         font-weight: normal;
-        margin: 0px 10px; /*Khoảng cách giữa các phần tử div */
+        margin: 0px 10px;
+        /*Khoảng cách giữa các phần tử div */
         cursor: pointer;
         padding: 0px 20px;
       }
@@ -125,6 +143,49 @@
       .selected {
         background-color: black;
         color: white;
+      }
+
+      .flight-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .flight-info img {
+        width: 30px;
+        height: 30px;
+        margin-right: 10px;
+      }
+
+      .flight-info div {
+        flex-grow: 1;
+        text-align: left;
+      }
+
+      .flight-info {
+        text-align: center;
+      }
+
+      .flight-info div {
+        background-color: #d9d9d9;
+        padding: 4px;
+      }
+
+      .flight-info div span {
+        font-weight: normal;
+      }
+
+      .flight-info button {
+        background-color: black; /* Green */
+        border: none;
+        color: white;
+        padding: 10px 32px;
+        text-align: center;
+        text-decoration: none;
+        /* display: inline-block; */
+        font-size: 16px;
+        width: 100%;
+        cursor: pointer;
       }
     </style>
 
@@ -174,13 +235,51 @@
     <div id="planePopup">
       <div class="innerDiv">
         <p>Flight information</p>
+        <div class="flight-info">
+          <img src="assets/start.png" alt="start" />
+          <div>
+            <span>From</span><br />
+            SG, <span>Viet Nam</span>
+          </div>
+        </div>
+        <div class="flight-info">
+          <img src="assets/transition.png" alt="transition" />
+          <div>
+            <span>Transition</span><br />
+            Seoul, <span>Korea</span>
+          </div>
+        </div>
+        <div class="flight-info">
+          <img src="assets/end.png" alt="end" />
+          <div>
+            <span>To</span><br />
+            Paris, <span>France</span>
+          </div>
+        </div>
+        <div class="flight-info">
+          <img src="assets/distance.png" alt="distance" />
+          <div>1200<span> Km</span></div>
+        </div>
+        <div class="flight-info">
+          <img src="assets/clock-icon-symbol-sign-vector.jpg" alt="clock" />
+          <div>12<span> Hrs</span></div>
+        </div>
+        <div class="flight-info">
+          <button onclick="start()"><b>Start</b></button>
+        </div>
       </div>
       <div class="innerDiv">
         <p>Speed</p>
         <div class="innerDivContainer">
-          <div onclick="selectSpeed(this)"><p>1x</p></div>
-          <div onclick="selectSpeed(this)"><p>2x</p></div>
-          <div onclick="selectSpeed(this)"><p>3x</p></div>
+          <div onclick="selectSpeed(this)">
+            <p>1x</p>
+          </div>
+          <div onclick="selectSpeed(this)">
+            <p>2x</p>
+          </div>
+          <div onclick="selectSpeed(this)">
+            <p>3x</p>
+          </div>
         </div>
       </div>
       <div class="innerDiv">
@@ -200,16 +299,12 @@
         }
       }
 
-      function selectSpeed(element) {
-        var siblings = element.parentNode.children;
-        for (var i = 0; i < siblings.length; i++) {
-          siblings[i].classList.remove("selected");
-        }
-        element.classList.add("selected");
-      }
-
       function topLeftButtonClick() {
         alert("Top left button clicked!");
+      }
+
+      function start() {
+        console.log("start flying");
       }
     </script>
   </body>

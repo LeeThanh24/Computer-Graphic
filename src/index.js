@@ -112,7 +112,7 @@ camera.add(listener);
 
 const sound = new Audio(listener);
 const audioLoader = new AudioLoader();
-audioLoader.load("assets/plane-sound.mp3", function (buffer) {
+audioLoader.load("assets/plane-soundStop.mp3", function (buffer) {
   sound.setBuffer(buffer);
   sound.setLoop(true);
   sound.setVolume(0.5);
@@ -133,6 +133,9 @@ let moonMaterial;
 var ring1,
   ring2,
   ring3 = "";
+
+let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển của máy bay
+
 (async function () {
   let pmrem = new PMREMGenerator(renderer);
   let envmapTexture = await new RGBELoader()
@@ -195,7 +198,6 @@ var ring1,
     await new GLTFLoader().loadAsync("assets/plane/11805_airplane_v2_L2.glb")
   ).scene.children[0];
   let planesData = [makePlane(plane, textures.planeTrailMask, envMap, scene)];
-
   let sphere = new Mesh(
     new SphereGeometry(10, 70, 70),
     new MeshPhysicalMaterial({
@@ -355,14 +357,17 @@ var ring1,
       let plane = planeData.group;
       earthRotation += delta * 0.1;
 
-      plane.position.set(0, 0, 0);
-      plane.rotation.set(0, 0, 0);
-      plane.updateMatrixWorld();
+      if (!isPlaneMoving) {
+        // Chỉ cập nhật vị trí máy bay nếu không di chuyển
+        plane.position.set(0, 0, 0);
+        plane.rotation.set(0, 0, 0);
+        plane.updateMatrixWorld();
 
-      plane.rotateOnAxis(new Vector3(0, 1, 0), 5);
-      plane.rotateOnAxis(new Vector3(0, 0, 1), 5);
-      plane.translateY(planeData.yOff);
-      plane.rotateOnAxis(new Vector3(1, 0, 0), +Math.PI * 0.5);
+        plane.rotateOnAxis(new Vector3(0, 1, 0), 5);
+        plane.rotateOnAxis(new Vector3(0, 0, 1), 5);
+        plane.translateY(planeData.yOff);
+        plane.rotateOnAxis(new Vector3(1, 0, 0), +Math.PI * 0.5);
+      }
       sphere.rotation.y = earthRotation;
     });
 
@@ -373,7 +378,6 @@ var ring1,
     renderer.autoClear = true;
   });
 })();
-
 // Biến toàn cục để theo dõi máy bay được chọn
 let selectedPlane = null;
 
@@ -474,11 +478,11 @@ renderer.domElement.addEventListener("click", function (event) {
 
   if (intersects.length > 0) {
     let intersectedObject = intersects[0].object;
-
+    console.log(intersectedObject);
     if (intersectedObject.parent && intersectedObject.parent.userData.isPlane) {
       if (!selectedPlane) {
         selectedPlane = intersectedObject.parent;
-        console.log("Plane selected:", selectedPlane);
+        console.log("Plane selected:", selectedPlane.position);
         setTimeout(() => {
           sound.play(); // Bắt đầu phát âm thanh sau 0.5 giây khi chọn máy bay
         }, 500);
@@ -490,7 +494,7 @@ renderer.domElement.addEventListener("click", function (event) {
     }
   }
 });
-
+var numPoints = 300;
 function animatePlaneMovement(plane, targetPosition) {
   let smokeTrail = createSmokeTrail();
   scene.add(smokeTrail);
@@ -525,7 +529,6 @@ function animatePlaneMovement(plane, targetPosition) {
 
   // Generate intermediate points along the great circle path
   const points = [];
-  const numPoints = 100; // Number of intermediate points
   for (let i = 0; i <= numPoints; i++) {
     const t = i / numPoints;
     const intermediateSpherical = {
@@ -537,6 +540,7 @@ function animatePlaneMovement(plane, targetPosition) {
   }
 
   let index = 0;
+  isPlaneMoving = true; // Đặt cờ khi bắt đầu di chuyển
 
   const animate = () => {
     if (index < points.length) {
@@ -558,13 +562,23 @@ function animatePlaneMovement(plane, targetPosition) {
         plane.position,
         points[index].clone().sub(plane.position)
       );
+
       renderer.render(scene, camera);
       index++;
+      // Add a delay to slow down the animation
       requestAnimationFrame(animate);
     } else {
       scene.remove(smokeTrail);
       sound.stop(); // Dừng âm thanh khi hoàn thành di chuyển
       console.log("Hoàn thành di chuyển máy bay");
+      plane.position.set(targetPosition.x, targetPosition.y, targetPosition.z);
+      console.log(
+        "plane position after in animatePlaneMovement",
+        plane.position
+      );
+
+      isPlaneMoving = false; // Đặt cờ khi kết thúc di chuyển
+      renderer.render(scene, camera); // Gọi lại hàm render để cập nhật HTML
     }
   };
 
@@ -616,3 +630,30 @@ function createSmokeTrail() {
 
   return new Points(geometry, material);
 }
+
+export function selectSpeed(element) {
+  var siblings = element.parentNode.children;
+  let speed = element.querySelector("p").innerHTML;
+  console.log(speed);
+
+  switch (speed) {
+    case "1x":
+      numPoints = 300;
+      break;
+    case "2x":
+      numPoints = 200;
+      break;
+    case "3x":
+      numPoints = 100;
+      break;
+    default:
+      numPoints = 300;
+  }
+  for (var i = 0; i < siblings.length; i++) {
+    siblings[i].classList.remove("selected");
+  }
+  element.classList.add("selected");
+}
+
+// Đăng ký hàm selectSpeed làm global function
+window.selectSpeed = selectSpeed;
