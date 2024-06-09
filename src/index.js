@@ -1,3 +1,5 @@
+// JavaScript: index.js
+
 import {
   Vector2,
   DoubleSide,
@@ -112,7 +114,7 @@ camera.add(listener);
 
 const sound = new Audio(listener);
 const audioLoader = new AudioLoader();
-audioLoader.load("assets/plane-soundStop.mp3", function (buffer) {
+audioLoader.load("assets/plane-sound.mp3", function (buffer) {
   sound.setBuffer(buffer);
   sound.setLoop(true);
   sound.setVolume(0.5);
@@ -380,6 +382,7 @@ let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển c�
 })();
 // Biến toàn cục để theo dõi máy bay được chọn
 let selectedPlane = null;
+let targetPosition = null;
 
 function makePlane(planeMesh, trailTexture, envMap, scene) {
   let plane = planeMesh.clone();
@@ -475,22 +478,72 @@ renderer.domElement.addEventListener("click", function (event) {
   raycaster.setFromCamera(mouse, camera);
 
   let intersects = raycaster.intersectObjects(scene.children, true);
-
+  targetPosition = intersects[0].point;
+  // Lấy thông tin của địa điểm được click
+  let locationInfo = {
+    from: "",
+    transition: "Seoul, Korea",
+    // to: "Paris, France",
+    to: "",
+    distance: "0",
+    duration: "0",
+  };
   if (intersects.length > 0) {
     let intersectedObject = intersects[0].object;
-    console.log(intersectedObject);
     if (intersectedObject.parent && intersectedObject.parent.userData.isPlane) {
       if (!selectedPlane) {
         selectedPlane = intersectedObject.parent;
         console.log("Plane selected:", selectedPlane.position);
-        setTimeout(() => {
-          sound.play(); // Bắt đầu phát âm thanh sau 0.5 giây khi chọn máy bay
-        }, 500);
+        let distance = calDistance(
+          [targetPosition.x, targetPosition.y, targetPosition.z],
+          [
+            selectedPlane.position.x,
+            selectedPlane.position.y,
+            selectedPlane.position.z,
+          ]
+        );
+        locationInfo["distance"] = `0`;
+        locationInfo["duration"] = `0`;
+        locationInfo["from"] = `(${
+          Math.round(selectedPlane.position.x * 100) / 100
+        },${Math.round(selectedPlane.position.y * 100) / 100},${
+          Math.round(selectedPlane.position.z * 100) / 100
+        })`;
+
+        updateFlightInformation(locationInfo);
+
+        sound.play();
       }
     } else if (selectedPlane) {
       let targetPosition = intersects[0].point;
-      animatePlaneMovement(selectedPlane, targetPosition);
-      selectedPlane = null;
+      locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${
+        Math.round(targetPosition.y * 100) / 100
+      },${Math.round(targetPosition.z * 100) / 100})`;
+
+      let distance = calDistance(
+        [targetPosition.x, targetPosition.y, targetPosition.z],
+        [
+          selectedPlane.position.x,
+          selectedPlane.position.y,
+          selectedPlane.position.z,
+        ]
+      );
+      locationInfo["distance"] = `${Math.trunc(distance * 1000)}`;
+      locationInfo["duration"] = `${Math.trunc((distance * 1000) / numPoints)}`;
+      locationInfo["from"] = `(${
+        Math.round(selectedPlane.position.x * 100) / 100
+      },${Math.round(selectedPlane.position.y * 100) / 100},${
+        Math.round(selectedPlane.position.z * 100) / 100
+      })`;
+      updateFlightInformation(locationInfo);
+      // animatePlaneMovement(selectedPlane, targetPosition);
+
+      // selectedPlane = null;
+    } else {
+      locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${
+        Math.round(targetPosition.y * 100) / 100
+      },${Math.round(targetPosition.z * 100) / 100})`;
+      updateFlightInformation(locationInfo);
     }
   }
 });
@@ -655,5 +708,66 @@ export function selectSpeed(element) {
   element.classList.add("selected");
 }
 
-// Đăng ký hàm selectSpeed làm global function
+// Đăng ký hàm làm global function
 window.selectSpeed = selectSpeed;
+window.startFlight = startFlight;
+
+function updateFlightInformation(info) {
+  const flightInfoDiv = document.querySelector("#planePopup .innerDiv");
+
+  // Clear existing flight info
+  flightInfoDiv.innerHTML = `
+    <p>Flight information</p>
+  `;
+
+  // Update flight info with new data
+  flightInfoDiv.innerHTML += `
+    <div class="flight-info">
+      <img src="assets/start.png" alt="start" />
+      <div><span>From</span><br />${info.from}</div>
+    </div>
+    <div class="flight-info">
+      <img src="assets/transition.png" alt="transition" />
+      <div>
+            <span>Transition</span><br />
+            Seoul, <span>Korea</span>
+          </div>
+    </div>
+    <div class="flight-info">
+      <img src="assets/end.png" alt="end" />
+      <div><span>To</span><br />${info.to}</div>
+    </div>
+    <div class="flight-info">
+      <img src="assets/distance.png" alt="distance" />
+      <div>${info.distance}<span> Km</span></div>
+    </div>
+    <div class="flight-info">
+      <img src="assets/clock-icon-symbol-sign-vector.jpg" alt="clock" />
+      <div>${info.duration}<span> Hrs</span></div>
+    </div>
+    <div class="flight-info">
+      <button onclick="startFlight()"><b>Start</b></button>
+    </div>
+  `;
+}
+
+function calDistance([x0, y0, z0], [x1, y1, z1]) {
+  return Math.hypot(x1 - x0, y1 - y0, z1 - z0);
+}
+
+// Thêm hàm startFlight
+export function startFlight() {
+  console.log(
+    "selectedPlane và targetPosition in function startFlight",
+    selectedPlane,
+    " ",
+    targetPosition
+  );
+  if (selectedPlane && targetPosition) {
+    animatePlaneMovement(selectedPlane, targetPosition);
+    selectedPlane = null; // Reset sau khi di chuyển
+    targetPosition = null; // Reset sau khi di chuyển
+  } else {
+    console.log("Plane or target position not selected");
+  }
+}

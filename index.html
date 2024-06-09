@@ -187,6 +187,11 @@
         width: 100%;
         cursor: pointer;
       }
+
+      .flight-info:nth-child(2) div,
+      .flight-info:nth-child(4) div {
+        height: 52px;
+      }
     </style>
 
     <script type="module" src="src/index.js"></script>
@@ -197,7 +202,7 @@
     <div class="sun-background"></div>
     <div class="moon-background"></div>
     <button class="center-button" onclick="togglePopup()">Flight</button>
-    <input type="checkbox" id="toggle" />
+    <!-- <input type="checkbox" id="toggle" />
 
     <div class="display">
       <label for="toggle">
@@ -230,17 +235,14 @@
           </svg>
         </div>
       </label>
-    </div>
+    </div> -->
     <!-- Popup -->
     <div id="planePopup">
       <div class="innerDiv">
         <p>Flight information</p>
         <div class="flight-info">
           <img src="assets/start.png" alt="start" />
-          <div>
-            <span>From</span><br />
-            SG, <span>Viet Nam</span>
-          </div>
+          <div><span>From</span></div>
         </div>
         <div class="flight-info">
           <img src="assets/transition.png" alt="transition" />
@@ -251,21 +253,18 @@
         </div>
         <div class="flight-info">
           <img src="assets/end.png" alt="end" />
-          <div>
-            <span>To</span><br />
-            Paris, <span>France</span>
-          </div>
+          <div><span>To</span></div>
         </div>
         <div class="flight-info">
           <img src="assets/distance.png" alt="distance" />
-          <div>1200<span> Km</span></div>
+          <div>0<span> Km</span></div>
         </div>
         <div class="flight-info">
           <img src="assets/clock-icon-symbol-sign-vector.jpg" alt="clock" />
-          <div>12<span> Hrs</span></div>
+          <div>0<span> Hrs</span></div>
         </div>
         <div class="flight-info">
-          <button onclick="start()"><b>Start</b></button>
+          <button onclick="startFlight()"><b>Start</b></button>
         </div>
       </div>
       <div class="innerDiv">
@@ -301,10 +300,6 @@
 
       function topLeftButtonClick() {
         alert("Top left button clicked!");
-      }
-
-      function start() {
-        console.log("start flying");
       }
     </script>
   </body>
