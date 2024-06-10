@@ -137,6 +137,26 @@ var ring1,
   ring3 = "";
 
 let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển của máy bay
+function addLocations() {
+  const locations = [
+    { name: "Sai Gon, Viet Nam", position: { x: 6, y: 3, z: 8 }, image: 'assets/start.png' },
+    { name: "Seoul, Korea", position: { x: -7.5, y: 4, z: 6 }, image: 'assets/end.png' },
+    { name: "London, England", position: { x: 3, y: 2, z: -10 }, image: 'assets/start.png' },
+    { name: "Cali, USA", position: { x: 0, y: 0, z: -10.5 }, image: 'assets/end.png' },
+  ];
+
+  locations.forEach((loc) => {
+    const texture = new TextureLoader().load(loc.image);
+    const material = new SpriteMaterial({ map: texture });
+    const sprite = new Sprite(material);
+    sprite.position.set(loc.position.x, loc.position.y, loc.position.z);
+    sprite.scale.set(1, 1, 1); // Adjust the scale as needed
+    sprite.name = loc.name;
+    sprite.userData.isLocation = true;
+    sprite.userData.locationName = loc.name; // Thêm tên địa điểm vào userData
+    scene.add(sprite);
+  });
+}
 
 (async function () {
   let pmrem = new PMREMGenerator(renderer);
@@ -329,6 +349,7 @@ let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển c�
 
   renderer.setAnimationLoop(() => {
     let delta = clock.getDelta();
+    addLocations(); // Add this line to call the function after creating the Earth sphere
 
     ringScene();
 
@@ -472,46 +493,30 @@ renderer.domElement.addEventListener("click", function (event) {
 
   let intersects = raycaster.intersectObjects(scene.children, true);
   targetPosition = intersects[0].point;
+
   // Lấy thông tin của địa điểm được click
   let locationInfo = {
     from: "",
     transition: "Seoul, Korea",
-    // to: "Paris, France",
     to: "",
     distance: "0",
     duration: "0",
   };
+
   if (intersects.length > 0) {
     let intersectedObject = intersects[0].object;
     if (intersectedObject.parent && intersectedObject.parent.userData.isPlane) {
       if (!selectedPlane) {
         selectedPlane = intersectedObject.parent;
         console.log("Plane selected:", selectedPlane.position);
-        let distance = calDistance(
-          [targetPosition.x, targetPosition.y, targetPosition.z],
-          [
-            selectedPlane.position.x,
-            selectedPlane.position.y,
-            selectedPlane.position.z,
-          ]
-        );
-        locationInfo["distance"] = `0`;
-        locationInfo["duration"] = `0`;
-        locationInfo["from"] = `(${
-          Math.round(selectedPlane.position.x * 100) / 100
-        },${Math.round(selectedPlane.position.y * 100) / 100},${
-          Math.round(selectedPlane.position.z * 100) / 100
-        })`;
+        locationInfo["from"] = `(${Math.round(selectedPlane.position.x * 100) / 100},${Math.round(selectedPlane.position.y * 100) / 100},${Math.round(selectedPlane.position.z * 100) / 100})`;
 
         updateFlightInformation(locationInfo);
-
         sound.play();
       }
     } else if (selectedPlane) {
       let targetPosition = intersects[0].point;
-      locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${
-        Math.round(targetPosition.y * 100) / 100
-      },${Math.round(targetPosition.z * 100) / 100})`;
+      locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${Math.round(targetPosition.y * 100) / 100},${Math.round(targetPosition.z * 100) / 100})`;
 
       let distance = calDistance(
         [targetPosition.x, targetPosition.y, targetPosition.z],
@@ -523,23 +528,23 @@ renderer.domElement.addEventListener("click", function (event) {
       );
       locationInfo["distance"] = `${Math.trunc(distance * 1000)}`;
       locationInfo["duration"] = `${Math.trunc((distance * 1000) / numPoints)}`;
-      locationInfo["from"] = `(${
-        Math.round(selectedPlane.position.x * 100) / 100
-      },${Math.round(selectedPlane.position.y * 100) / 100},${
-        Math.round(selectedPlane.position.z * 100) / 100
-      })`;
+      locationInfo["from"] = `(${Math.round(selectedPlane.position.x * 100) / 100},${Math.round(selectedPlane.position.y * 100) / 100},${Math.round(selectedPlane.position.z * 100) / 100})`;
       updateFlightInformation(locationInfo);
       // animatePlaneMovement(selectedPlane, targetPosition);
 
       // selectedPlane = null;
     } else {
-      locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${
-        Math.round(targetPosition.y * 100) / 100
-      },${Math.round(targetPosition.z * 100) / 100})`;
+      locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${Math.round(targetPosition.y * 100) / 100},${Math.round(targetPosition.z * 100) / 100})`;
+      updateFlightInformation(locationInfo);
+    }
+    // Check if the clicked object is a location
+    if (intersectedObject.userData.isLocation) {
+      locationInfo["to"] = intersectedObject.userData.locationName;
       updateFlightInformation(locationInfo);
     }
   }
 });
+
 var numPoints = 300;
 function animatePlaneMovement(plane, targetPosition) {
   let smokeTrail = createSmokeTrail();
@@ -575,6 +580,7 @@ function animatePlaneMovement(plane, targetPosition) {
 
   // Generate intermediate points along the great circle path
   const points = [];
+  console.log("num points : ", numPoints);
   for (let i = 0; i <= numPoints; i++) {
     const t = i / numPoints;
     const intermediateSpherical = {
@@ -679,11 +685,11 @@ function createSmokeTrail() {
 export function selectSpeed(element) {
   var siblings = element.parentNode.children;
   let speed = element.querySelector("p").innerHTML;
-  console.log(speed);
-
+  speed= speed.split("<");
+  speed= speed[1].split(">")[1];
   switch (speed) {
     case "1x":
-      numPoints = 300;
+      numPoints = 400;
       break;
     case "2x":
       numPoints = 200;
@@ -692,7 +698,7 @@ export function selectSpeed(element) {
       numPoints = 100;
       break;
     default:
-      numPoints = 300;
+      numPoints = 400;
   }
   for (var i = 0; i < siblings.length; i++) {
     siblings[i].classList.remove("selected");
