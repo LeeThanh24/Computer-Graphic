@@ -139,10 +139,10 @@ var ring1,
 let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển của máy bay
 function addLocations() {
   const locations = [
-    { name: "Sai Gon, Viet Nam", position: { x: 6, y: 3, z: 8 }, image: 'assets/start.png' },
-    { name: "Seoul, Korea", position: { x: -7.5, y: 4, z: 6 }, image: 'assets/end.png' },
-    { name: "London, England", position: { x: 3, y: 2, z: -10 }, image: 'assets/start.png' },
-    { name: "Cali, USA", position: { x: 0, y: 0, z: -10.5 }, image: 'assets/end.png' },
+    { name: "Sai Gon, Viet Nam", position: { x: 6, y: 3, z: 8 }, image: 'assets/start.png', transition: "Hong Kong, China" },
+    { name: "Seoul, Korea", position: { x: -7.5, y: 4, z: 6 }, image: 'assets/end.png', transition: "Tokyo, Japan" },
+    { name: "London, England", position: { x: 3, y: 2, z: -10 }, image: 'assets/start.png', transition: "Paris, France" },
+    { name: "Cali, USA", position: { x: 0, y: 0, z: -10.5 }, image: 'assets/end.png', transition: "New York, USA" },
   ];
 
   locations.forEach((loc) => {
@@ -153,7 +153,8 @@ function addLocations() {
     sprite.scale.set(1, 1, 1); // Adjust the scale as needed
     sprite.name = loc.name;
     sprite.userData.isLocation = true;
-    sprite.userData.locationName = loc.name; // Thêm tên địa điểm vào userData
+    sprite.userData.locationName = loc.name; // Add location name to userData
+    sprite.userData.transition = loc.transition; // Add transition to userData
     scene.add(sprite);
   });
 }
@@ -497,7 +498,7 @@ renderer.domElement.addEventListener("click", function (event) {
   // Lấy thông tin của địa điểm được click
   let locationInfo = {
     from: "",
-    transition: "Seoul, Korea",
+    transition: "",
     to: "",
     distance: "0",
     duration: "0",
@@ -529,6 +530,7 @@ renderer.domElement.addEventListener("click", function (event) {
       locationInfo["distance"] = `${Math.trunc(distance * 1000)}`;
       locationInfo["duration"] = `${Math.trunc((distance * 1000) / numPoints)}`;
       locationInfo["from"] = `(${Math.round(selectedPlane.position.x * 100) / 100},${Math.round(selectedPlane.position.y * 100) / 100},${Math.round(selectedPlane.position.z * 100) / 100})`;
+      
       updateFlightInformation(locationInfo);
       // animatePlaneMovement(selectedPlane, targetPosition);
 
@@ -540,6 +542,7 @@ renderer.domElement.addEventListener("click", function (event) {
     // Check if the clicked object is a location
     if (intersectedObject.userData.isLocation) {
       locationInfo["to"] = intersectedObject.userData.locationName;
+      locationInfo["transition"] = intersectedObject.userData.transition; // Update transition
       updateFlightInformation(locationInfo);
     }
   }
@@ -728,7 +731,7 @@ function updateFlightInformation(info) {
       <img src="assets/transition.png" alt="transition" />
       <div>
             <span>Transition</span><br />
-            Seoul, <span>Korea</span>
+            ${info.transition}
           </div>
     </div>
     <div class="flight-info">
