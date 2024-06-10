@@ -138,6 +138,79 @@ var ring1,
 
 let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển của máy bay
 
+function addLocations() {
+  const locations = [
+    {
+      name: "Bangkok, Thailand",
+      position: { x: 6, y: 3, z: 8 },
+      image: "assets/end.png",
+      transition: {
+        name: "Hong Kong, China",
+        position: { x: 6.5, y: 4, z: 7 },
+        image: "assets/transition.png",
+      },
+    },
+    {
+      name: "Seoul, Korea",
+      position: { x: -7.5, y: 4, z: 6 },
+      image: "assets/end.png",
+      transition: {
+        name: "Tokyo, Japan",
+        position: { x: -7, y: 5, z: 6 },
+        image: "assets/transition.png",
+      },
+    },
+    {
+      name: "London, England",
+      position: { x: 3, y: 2, z: -10 },
+      image: "assets/end.png",
+      transition: {
+        name: "Paris, France",
+        position: { x: 4, y: 3, z: -9 },
+        image: "assets/transition.png",
+      },
+    },
+    {
+      name: "Cali, USA",
+      position: { x: 0, y: 0, z: -10.5 },
+      image: "assets/end.png",
+      transition: {
+        name: "New York, USA",
+        position: { x: -2, y: 1, z: -10 },
+        image: "assets/transition.png",
+      },
+    },
+  ];
+
+  locations.forEach((loc) => {
+    const texture = new TextureLoader().load(loc.image);
+    const material = new SpriteMaterial({ map: texture });
+    const sprite = new Sprite(material);
+    sprite.position.set(loc.position.x, loc.position.y, loc.position.z);
+    sprite.scale.set(1, 1, 1); // Adjust the scale as needed
+    sprite.name = loc.name;
+    sprite.userData.isLocation = true;
+    sprite.userData.locationName = loc.name; // Add location name to userData
+    sprite.userData.transition = loc.transition; // Add transition to userData
+    scene.add(sprite);
+
+    // Add transition point sprite
+    const transitionTexture = new TextureLoader().load(loc.transition.image);
+    const transitionMaterial = new SpriteMaterial({ map: transitionTexture });
+    const transitionSprite = new Sprite(transitionMaterial);
+    transitionSprite.position.set(
+      loc.transition.position.x,
+      loc.transition.position.y,
+      loc.transition.position.z
+    );
+    transitionSprite.scale.set(0.5, 0.5, 0.5); // Adjust the scale as needed
+    transitionSprite.name = loc.transition.name;
+    transitionSprite.userData.isTransition = true;
+    transitionSprite.userData.locationName = loc.transition.name; // Add transition name to userData
+    scene.add(transitionSprite);
+  });
+}
+
 (async function () {
   let pmrem = new PMREMGenerator(renderer);
   let envmapTexture = await new RGBELoader()
@@ -329,6 +402,7 @@ let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển c�
 
   renderer.setAnimationLoop(() => {
     let delta = clock.getDelta();
+    addLocations(); // Add this line to call the function after creating the Earth sphere
 
     ringScene();
 
@@ -472,39 +546,29 @@ renderer.domElement.addEventListener("click", function (event) {
 
   let intersects = raycaster.intersectObjects(scene.children, true);
   targetPosition = intersects[0].point;
+
   // Lấy thông tin của địa điểm được click
   let locationInfo = {
-    from: "",
-    transition: "Seoul, Korea",
-    // to: "Paris, France",
+    from: "Sai Gon, Viet Nam",
+    transition: "",
     to: "",
     distance: "0",
     duration: "0",
   };
+
   if (intersects.length > 0) {
     let intersectedObject = intersects[0].object;
     if (intersectedObject.parent && intersectedObject.parent.userData.isPlane) {
       if (!selectedPlane) {
         selectedPlane = intersectedObject.parent;
         console.log("Plane selected:", selectedPlane.position);
-        let distance = calDistance(
-          [targetPosition.x, targetPosition.y, targetPosition.z],
-          [
-            selectedPlane.position.x,
-            selectedPlane.position.y,
-            selectedPlane.position.z,
-          ]
-        );
-        locationInfo["distance"] = `0`;
-        locationInfo["duration"] = `0`;
-        locationInfo["from"] = `(${
-          Math.round(selectedPlane.position.x * 100) / 100
-        },${Math.round(selectedPlane.position.y * 100) / 100},${
-          Math.round(selectedPlane.position.z * 100) / 100
-        })`;
+        // locationInfo["from"] = `(${
+        //   Math.round(selectedPlane.position.x * 100) / 100
+        // },${Math.round(selectedPlane.position.y * 100) / 100},${
+        //   Math.round(selectedPlane.position.z * 100) / 100
+        // })`;
 
         updateFlightInformation(locationInfo);
-
         sound.play();
       }
     } else if (selectedPlane) {
@@ -523,44 +587,55 @@ renderer.domElement.addEventListener("click", function (event) {
       );
       locationInfo["distance"] = `${Math.trunc(distance * 1000)}`;
       locationInfo["duration"] = `${Math.trunc((distance * 1000) / numPoints)}`;
-      locationInfo["from"] = `(${
-        Math.round(selectedPlane.position.x * 100) / 100
-      },${Math.round(selectedPlane.position.y * 100) / 100},${
-        Math.round(selectedPlane.position.z * 100) / 100
-      })`;
-      updateFlightInformation(locationInfo);
-      // animatePlaneMovement(selectedPlane, targetPosition);
+      // locationInfo["from"] = `(${
+      //   Math.round(selectedPlane.position.x * 100) / 100
+      // },${Math.round(selectedPlane.position.y * 100) / 100},${
+      //   Math.round(selectedPlane.position.z * 100) / 100
+      // })`;
 
-      // selectedPlane = null;
+      updateFlightInformation(locationInfo);
     } else {
       locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${
         Math.round(targetPosition.y * 100) / 100
       },${Math.round(targetPosition.z * 100) / 100})`;
       updateFlightInformation(locationInfo);
     }
+    // Check if the clicked object is a location
+    if (intersectedObject.userData.isLocation) {
+      locationInfo["to"] = intersectedObject.userData.locationName;
+      locationInfo["transition"] = intersectedObject.userData.transition.name; // Update transition
+      currentTransition = intersectedObject.userData;
+      // console.log(intersectedObject.userData);
+      updateFlightInformation(locationInfo);
+    }
+    // Check if the clicked object is a transition
+    if (intersectedObject.userData.isTransition) {
+      locationInfo["to"] = intersectedObject.userData.locationName;
+      updateFlightInformation(locationInfo);
+    }
   }
 });
+
 var numPoints = 300;
-function animatePlaneMovement(plane, targetPosition) {
+var currentTransition = null;
+function animatePlaneMovement(plane, transitionPosition, targetPosition) {
   let smokeTrail = createSmokeTrail();
   scene.add(smokeTrail);
 
   const start = plane.position.clone();
-  const radius = 10; // Radius of the Earth sphere
+  const radius = 10; // Bán kính của quả cầu Trái Đất
 
-  // Convert Cartesian coordinates to spherical coordinates
   function toSpherical(cartesian) {
     const radius = Math.sqrt(
       cartesian.x * cartesian.x +
         cartesian.y * cartesian.y +
         cartesian.z * cartesian.z
     );
-    const theta = Math.acos(cartesian.y / radius); // Polar angle
-    const phi = Math.atan2(cartesian.z, cartesian.x); // Azimuthal angle
+    const theta = Math.acos(cartesian.y / radius); // Góc cực
+    const phi = Math.atan2(cartesian.z, cartesian.x); // Góc phương vị
     return { radius, theta, phi };
   }
 
-  // Convert spherical coordinates back to Cartesian coordinates
   function toCartesian(spherical) {
     const { radius, theta, phi } = spherical;
     return new Vector3(
@@ -571,32 +646,73 @@ function animatePlaneMovement(plane, targetPosition) {
   }
 
   const startSpherical = toSpherical(start);
+  const transitionSpherical = transitionPosition
+    ? toSpherical(transitionPosition)
+    : null;
   const endSpherical = toSpherical(targetPosition);
 
-  // Generate intermediate points along the great circle path
-  const points = [];
-  for (let i = 0; i <= numPoints; i++) {
-    const t = i / numPoints;
+  const pointsToTransition = [];
+  const pointsToEnd = [];
+
+  // let numPointsToTransition = 100; // Số điểm từ bắt đầu đến transition
+  let numPointsToEnd = 0; // Số điểm từ transition đến điểm đích, thay đổi giá trị này để điều chỉnh tốc độ
+  switch (numPoints) {
+    case 400:
+      numPointsToEnd = 80;
+      break;
+    case 200:
+      numPointsToEnd = 30;
+      break;
+    case 100:
+      numPointsToEnd = 10;
+      break;
+    default:
+      numPointsToEnd = 80;
+      break;
+  }
+  if (transitionSpherical) {
+    for (let i = 0; i <= numPoints; i++) {
+      const t = i / numPoints;
+      const intermediateSpherical = {
+        radius: radius + 1.5,
+        theta: startSpherical.theta * (1 - t) + transitionSpherical.theta * t,
+        phi: startSpherical.phi * (1 - t) + transitionSpherical.phi * t,
+      };
+      pointsToTransition.push(toCartesian(intermediateSpherical));
+    }
+  }
+
+  for (let i = 0; i <= numPointsToEnd; i++) {
+    const t = i / numPointsToEnd;
     const intermediateSpherical = {
-      radius: radius + 1.5, // Adjust the radius to make the plane fly higher
-      theta: startSpherical.theta * (1 - t) + endSpherical.theta * t,
-      phi: startSpherical.phi * (1 - t) + endSpherical.phi * t,
+      radius: radius + 1.5,
+      theta:
+        (transitionSpherical
+          ? transitionSpherical.theta
+          : startSpherical.theta) *
+          (1 - t) +
+        endSpherical.theta * t,
+      phi:
+        (transitionSpherical ? transitionSpherical.phi : startSpherical.phi) *
+          (1 - t) +
+        endSpherical.phi * t,
     };
-    points.push(toCartesian(intermediateSpherical));
+    pointsToEnd.push(toCartesian(intermediateSpherical));
   }
 
   let index = 0;
   isPlaneMoving = true; // Đặt cờ khi bắt đầu di chuyển
 
-  const animate = () => {
-    ringScene();
-    if (index < points.length) {
-      plane.position.copy(points[index]);
+  const animateToTransition = () => {
+    if (index < pointsToTransition.length) {
+      plane.position.copy(pointsToTransition[index]);
 
-      // Adjust plane orientation to follow the curve
       if (index > 0) {
-        const prevPoint = points[index - 1];
-        const direction = points[index].clone().sub(prevPoint).normalize();
+        const prevPoint = pointsToTransition[index - 1];
+        const direction = pointsToTransition[index]
+          .clone()
+          .sub(prevPoint)
+          .normalize();
         const quaternion = new Quaternion().setFromUnitVectors(
           new Vector3(0, 1, 0),
           direction
@@ -607,27 +723,53 @@ function animatePlaneMovement(plane, targetPosition) {
       updateSmokeTrail(
         smokeTrail,
         plane.position,
-        points[index].clone().sub(plane.position)
+        pointsToTransition[index].clone().sub(plane.position)
       );
 
       index++;
-      // Add a delay to slow down the animation
-      requestAnimationFrame(animate);
+      requestAnimationFrame(animateToTransition);
+    } else {
+      index = 0; // Reset lại chỉ số cho phần tiếp theo
+      setTimeout(animateToEnd, 0); // Dừng lại trong 2 giây tại điểm chuyển tiếp
+    }
+  };
+
+  const animateToEnd = () => {
+    if (index < pointsToEnd.length) {
+      plane.position.copy(pointsToEnd[index]);
+
+      if (index > 0) {
+        const prevPoint = pointsToEnd[index - 1];
+        const direction = pointsToEnd[index].clone().sub(prevPoint).normalize();
+        const quaternion = new Quaternion().setFromUnitVectors(
+          new Vector3(0, 1, 0),
+          direction
+        );
+        plane.setRotationFromQuaternion(quaternion);
+      }
+
+      updateSmokeTrail(
+        smokeTrail,
+        plane.position,
+        pointsToEnd[index].clone().sub(plane.position)
+      );
+
+      index++;
+      requestAnimationFrame(animateToEnd);
     } else {
       scene.remove(smokeTrail);
       sound.stop(); // Dừng âm thanh khi hoàn thành di chuyển
       console.log("Hoàn thành di chuyển máy bay");
       plane.position.set(targetPosition.x, targetPosition.y, targetPosition.z);
-      console.log(
-        "plane position after in animatePlaneMovement",
-        plane.position
-      );
-
       isPlaneMoving = false; // Đặt cờ khi kết thúc di chuyển
     }
   };
 
-  animate();
+  if (transitionSpherical) {
+    animateToTransition();
+  } else {
+    animateToEnd();
+  }
 }
 
 function updateSmokeTrail(trail, position, velocity) {
@@ -679,11 +821,11 @@ function createSmokeTrail() {
 export function selectSpeed(element) {
   var siblings = element.parentNode.children;
   let speed = element.querySelector("p").innerHTML;
-  console.log(speed);
-
+  speed = speed.split("<");
+  speed = speed[1].split(">")[1];
   switch (speed) {
     case "1x":
-      numPoints = 300;
+      numPoints = 400;
       break;
     case "2x":
       numPoints = 200;
@@ -692,7 +834,7 @@ export function selectSpeed(element) {
       numPoints = 100;
       break;
     default:
-      numPoints = 300;
+      numPoints = 400;
   }
   for (var i = 0; i < siblings.length; i++) {
     siblings[i].classList.remove("selected");
@@ -722,7 +864,7 @@ function updateFlightInformation(info) {
       <img src="assets/transition.png" alt="transition" />
       <div>
             <span>Transition</span><br />
-            Seoul, <span>Korea</span>
+            ${info.transition}
           </div>
     </div>
     <div class="flight-info">
@@ -748,17 +890,30 @@ function calDistance([x0, y0, z0], [x1, y1, z1]) {
 }
 
 // Thêm hàm startFlight
+let currentTransitionPosition = null;
 export function startFlight() {
-  console.log(
-    "selectedPlane và targetPosition in function startFlight",
-    selectedPlane,
-    " ",
-    targetPosition
-  );
   if (selectedPlane && targetPosition) {
-    animatePlaneMovement(selectedPlane, targetPosition);
+    if (currentTransition && currentTransition.transition) {
+      currentTransitionPosition = currentTransition.transition.position;
+    } else {
+      currentTransitionPosition = null;
+    }
+    console.log("current trans : ", currentTransitionPosition);
+
+    if (currentTransitionPosition) {
+      animatePlaneMovement(
+        selectedPlane,
+        currentTransitionPosition,
+        targetPosition
+      );
+    } else {
+      console.log("enter transition null");
+      animatePlaneMovement(selectedPlane, null, targetPosition);
+    }
+
     selectedPlane = null; // Reset sau khi di chuyển
     targetPosition = null; // Reset sau khi di chuyển
+    currentTransition.transition.position = null; // Reset sau khi di chuyển
   } else {
     console.log("Plane or target position not selected");
   }

@@ -45,7 +45,7 @@
         /* Đặt ở đầu trang */
         right: 0;
         /* Đẩy popup sang bên phải */
-        width: 300px;
+        width: 350px;
         /* Đặt chiều rộng cho popup */
         height: 100vh;
         /* Đặt chiều cao bằng với 100% viewport height */
@@ -91,7 +91,7 @@
 
       .innerDiv {
         background-color: white;
-        margin-bottom: 100px;
+        margin-bottom: 30px;
         border-radius: 20px;
         font-family: verdana;
         font-weight: bolder;
@@ -138,6 +138,7 @@
         /*Khoảng cách giữa các phần tử div */
         cursor: pointer;
         padding: 0px 20px;
+        padding-top: 8px;
       }
 
       .selected {
@@ -164,10 +165,12 @@
 
       .flight-info {
         text-align: center;
+        padding: 6px 15px;
       }
 
       .flight-info div {
-        background-color: #d9d9d9;
+        background-color: #efefef;
+        border-radius: 5px;
         padding: 4px;
       }
 
@@ -189,6 +192,7 @@
       }
 
       .flight-info:nth-child(2) div,
+      .flight-info:nth-child(3) div,
       .flight-info:nth-child(4) div {
         height: 52px;
       }
@@ -247,8 +251,7 @@
         <div class="flight-info">
           <img src="assets/transition.png" alt="transition" />
           <div>
-            <span>Transition</span><br />
-            Seoul, <span>Korea</span>
+            <span>Transition</span>
           </div>
         </div>
         <div class="flight-info">
@@ -271,13 +274,13 @@
         <p>Speed</p>
         <div class="innerDivContainer">
           <div onclick="selectSpeed(this)">
-            <p>1x</p>
+            <p><b>1x</b></p>
           </div>
           <div onclick="selectSpeed(this)">
-            <p>2x</p>
+            <p><b>2x</b></p>
           </div>
           <div onclick="selectSpeed(this)">
-            <p>3x</p>
+            <p><b>3x</b></p>
           </div>
         </div>
       </div>
