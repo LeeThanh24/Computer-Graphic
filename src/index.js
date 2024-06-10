@@ -549,7 +549,7 @@ renderer.domElement.addEventListener("click", function (event) {
 
   // Lấy thông tin của địa điểm được click
   let locationInfo = {
-    from: "Sai Gon, Viet Nam",
+    from: "",
     transition: "",
     to: "",
     distance: "0",
@@ -567,7 +567,7 @@ renderer.domElement.addEventListener("click", function (event) {
         // },${Math.round(selectedPlane.position.y * 100) / 100},${
         //   Math.round(selectedPlane.position.z * 100) / 100
         // })`;
-
+        locationInfo["from"] = "Sai Gon, Viet Nam";
         updateFlightInformation(locationInfo);
         sound.play();
       }
@@ -592,6 +592,7 @@ renderer.domElement.addEventListener("click", function (event) {
       // },${Math.round(selectedPlane.position.y * 100) / 100},${
       //   Math.round(selectedPlane.position.z * 100) / 100
       // })`;
+      locationInfo["from"] = "Sai Gon, Viet Nam";
 
       updateFlightInformation(locationInfo);
     } else {
