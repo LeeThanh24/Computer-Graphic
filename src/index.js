@@ -1,5 +1,3 @@
-// JavaScript: index.js
-
 import {
   Vector2,
   DoubleSide,
@@ -138,47 +136,27 @@ var ring1,
 
 let isPlaneMoving = false; // Biến cờ theo dõi trạng thái di chuyển của máy bay
 
-function addLocations() {
+function addLocations(worldGroup) {
   const locations = [
     {
       name: "Bangkok, Thailand",
       position: { x: 6, y: 3, z: 8 },
       image: "assets/end.png",
-      transition: {
-        name: "Hong Kong, China",
-        position: { x: 6.5, y: 4, z: 7 },
-        image: "assets/transition.png",
-      },
     },
     {
       name: "Seoul, Korea",
       position: { x: -7.5, y: 4, z: 6 },
       image: "assets/end.png",
-      transition: {
-        name: "Tokyo, Japan",
-        position: { x: -7, y: 5, z: 6 },
-        image: "assets/transition.png",
-      },
     },
     {
       name: "London, England",
       position: { x: 3, y: 2, z: -10 },
       image: "assets/end.png",
-      transition: {
-        name: "Paris, France",
-        position: { x: 4, y: 3, z: -9 },
-        image: "assets/transition.png",
-      },
     },
     {
       name: "Cali, USA",
       position: { x: 0, y: 0, z: -10.5 },
       image: "assets/end.png",
-      transition: {
-        name: "New York, USA",
-        position: { x: -2, y: 1, z: -10 },
-        image: "assets/transition.png",
-      },
     },
   ];
 
@@ -191,31 +169,21 @@ function addLocations() {
     sprite.name = loc.name;
     sprite.userData.isLocation = true;
     sprite.userData.locationName = loc.name; // Add location name to userData
-    sprite.userData.transition = loc.transition; // Add transition to userData
-    scene.add(sprite);
-
-    // Add transition point sprite
-    const transitionTexture = new TextureLoader().load(loc.transition.image);
-    const transitionMaterial = new SpriteMaterial({ map: transitionTexture });
-    const transitionSprite = new Sprite(transitionMaterial);
-    transitionSprite.position.set(
-      loc.transition.position.x,
-      loc.transition.position.y,
-      loc.transition.position.z
-    );
-    transitionSprite.scale.set(0.5, 0.5, 0.5); // Adjust the scale as needed
-    transitionSprite.name = loc.transition.name;
-    transitionSprite.userData.isTransition = true;
-    transitionSprite.userData.locationName = loc.transition.name; // Add transition name to userData
-    scene.add(transitionSprite);
+    worldGroup.add(sprite);
   });
 }
+let planesData = null;
+let planeVisible = false;
+let startPoint = null;
+let endPoint = null;
+let startLocationName = "";
+let endLocationName = "";
 
 (async function () {
   let pmrem = new PMREMGenerator(renderer);
   let envmapTexture = await new RGBELoader()
     .setDataType(FloatType)
-    .loadAsync("assets/quarry_cloudy_4k.hdr"); // thanks to https://polyhaven.com/hdris !
+    .loadAsync("assets/quarry_cloudy_4k.hdr"); // thanks to https://polyhaven.com/hdris!
   let envMap = pmrem.fromEquirectangular(envmapTexture).texture;
 
   ring1 = new Mesh(
@@ -268,11 +236,16 @@ function addLocations() {
     planeTrailMask: await new TextureLoader().loadAsync("assets/mask.png"),
   };
 
+  // Tạo nhóm để chứa tất cả các đối tượng
+  const worldGroup = new Group();
+  scene.add(worldGroup);
+
   // Create planes fly around earth
   let plane = (
     await new GLTFLoader().loadAsync("assets/plane/11805_airplane_v2_L2.glb")
   ).scene.children[0];
-  let planesData = [makePlane(plane, textures.planeTrailMask, envMap, scene)];
+  planesData = [makePlane(plane, textures.planeTrailMask, envMap, worldGroup)];
+
   let sphere = new Mesh(
     new SphereGeometry(10, 70, 70),
     new MeshPhysicalMaterial({
@@ -292,7 +265,9 @@ function addLocations() {
   sphere.moonEnvIntensity = 0.1;
   sphere.rotation.y += Math.PI * 1.25;
   sphere.receiveShadow = true;
-  scene.add(sphere);
+  worldGroup.add(sphere);
+
+  addLocations(worldGroup); // Thêm các điểm đến vào nhóm
 
   // Load model vệ tinh
   let satelite;
@@ -306,7 +281,7 @@ function addLocations() {
     satelitePosition.add(sphere.position);
     satelite.position.copy(satelitePosition);
 
-    scene.add(satelite);
+    worldGroup.add(satelite);
     satelite.addEventListener("click", () => {
       console.log("Bạn đã click vào tên lửa!");
     });
@@ -332,7 +307,7 @@ function addLocations() {
     });
     moon = new Mesh(moonGeometry, moonMaterial);
     moon.position.set(-30, 0, 0);
-    scene.add(moon);
+    worldGroup.add(moon);
   });
 
   let clock = new Clock();
@@ -402,7 +377,6 @@ function addLocations() {
 
   renderer.setAnimationLoop(() => {
     let delta = clock.getDelta();
-    addLocations(); // Add this line to call the function after creating the Earth sphere
 
     ringScene();
 
@@ -424,7 +398,11 @@ function addLocations() {
 
     planesData.forEach((planeData) => {
       let plane = planeData.group;
-      earthRotation += delta * 0.1;
+
+      if (!isPlaneMoving && !planeVisible) {
+        // Không cập nhật vị trí máy bay nếu nó chưa được hiển thị
+        return;
+      }
 
       if (!isPlaneMoving) {
         // Chỉ cập nhật vị trí máy bay nếu không di chuyển
@@ -437,8 +415,10 @@ function addLocations() {
         plane.translateY(planeData.yOff);
         plane.rotateOnAxis(new Vector3(1, 0, 0), +Math.PI * 0.5);
       }
-      sphere.rotation.y = earthRotation;
     });
+
+    // Quay nhóm thay vì từng đối tượng riêng lẻ
+    // worldGroup.rotation.y += delta * 0.1; // Tốc độ quay của nhóm
 
     controls.update();
     renderer.render(scene, camera);
@@ -447,15 +427,70 @@ function addLocations() {
     renderer.autoClear = true;
   });
 })();
-// Biến toàn cục để theo dõi máy bay được chọn
-let selectedPlane = null;
-let targetPosition = null;
+
+renderer.domElement.addEventListener("click", function (event) {
+  event.preventDefault();
+
+  let mouse = new Vector2(
+    (event.clientX / window.innerWidth) * 2 - 1,
+    -(event.clientY / window.innerHeight) * 2 + 1
+  );
+
+  let raycaster = new Raycaster();
+  raycaster.setFromCamera(mouse, camera);
+
+  let intersects = raycaster.intersectObjects(scene.children, true);
+
+  if (intersects.length > 0) {
+    let intersectedObject = intersects[0].object;
+
+    if (!startPoint && intersectedObject.userData.isLocation) {
+      startPoint = intersects[0].point.clone();
+      startLocationName = intersectedObject.userData.locationName;
+      console.log("Start point set:", startPoint);
+
+      // Set the plane's position at the start point and adjust altitude
+      if (planesData && planesData.length > 0) {
+        let adjustedStartPoint = startPoint.clone();
+        adjustedStartPoint.y += 2;  // Adjust the value '1.5' to set the desired altitude
+        planesData[0].group.position.copy(adjustedStartPoint);
+        planesData[0].group.updateMatrixWorld();  // Ensure the matrix is updated
+        planesData[0].group.visible = true; // Show the plane
+        planeVisible = true; // Update the flag
+      }
+
+      updateFlightInformation({
+        from: startLocationName,
+        to: "",
+        distance: "0",
+        duration: "0"
+      });
+    } else if (!endPoint && intersectedObject.userData.isLocation) {
+      endPoint = intersects[0].point.clone();
+      endLocationName = intersectedObject.userData.locationName;
+      console.log("End point set:", endPoint);
+
+      let distance = calDistance(
+        [startPoint.x, startPoint.y, startPoint.z],
+        [endPoint.x, endPoint.y, endPoint.z]
+      );
+      let flightInfo = {
+        from: startLocationName,
+        to: endLocationName,
+        distance: `${distance.toFixed(0)} `,
+        duration: `${Math.pow(((distance * 100) / numPoints), 2).toFixed(0)} ` // Example duration calculation
+      };
+      updateFlightInformation(flightInfo);
+    }
+  }
+});
 
 function makePlane(planeMesh, trailTexture, envMap, scene) {
+  console.log("enter here 1 time ")
   let plane = planeMesh.clone();
   let planeSize = 0.002;
   plane.scale.set(planeSize, planeSize, planeSize);
-  plane.position.set(0, 0, 0);
+  plane.position.set(0, 1, 0);
   plane.rotation.set(0, 3.1, 0);
   plane.updateMatrixWorld();
 
@@ -490,6 +525,7 @@ function makePlane(planeMesh, trailTexture, envMap, scene) {
   let group = new Group();
   group.add(plane);
   group.add(trail);
+  group.visible = false; // Hide the plane initially
 
   group.userData.isPlane = true;
 
@@ -533,93 +569,9 @@ renderer.domElement.addEventListener("mousemove", function (event) {
   }
 });
 
-renderer.domElement.addEventListener("click", function (event) {
-  event.preventDefault();
-
-  let mouse = new Vector2(
-    (event.clientX / window.innerWidth) * 2 - 1,
-    -(event.clientY / window.innerHeight) * 2 + 1
-  );
-
-  let raycaster = new Raycaster();
-  raycaster.setFromCamera(mouse, camera);
-
-  let intersects = raycaster.intersectObjects(scene.children, true);
-  targetPosition = intersects[0].point;
-
-  // Lấy thông tin của địa điểm được click
-  let locationInfo = {
-    from: "",
-    transition: "",
-    to: "",
-    distance: "0",
-    duration: "0",
-  };
-
-  if (intersects.length > 0) {
-    let intersectedObject = intersects[0].object;
-    if (intersectedObject.parent && intersectedObject.parent.userData.isPlane) {
-      if (!selectedPlane) {
-        selectedPlane = intersectedObject.parent;
-        console.log("Plane selected:", selectedPlane.position);
-        // locationInfo["from"] = `(${
-        //   Math.round(selectedPlane.position.x * 100) / 100
-        // },${Math.round(selectedPlane.position.y * 100) / 100},${
-        //   Math.round(selectedPlane.position.z * 100) / 100
-        // })`;
-        locationInfo["from"] = "Sai Gon, Viet Nam";
-        updateFlightInformation(locationInfo);
-        sound.play();
-      }
-    } else if (selectedPlane) {
-      let targetPosition = intersects[0].point;
-      locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${
-        Math.round(targetPosition.y * 100) / 100
-      },${Math.round(targetPosition.z * 100) / 100})`;
-
-      let distance = calDistance(
-        [targetPosition.x, targetPosition.y, targetPosition.z],
-        [
-          selectedPlane.position.x,
-          selectedPlane.position.y,
-          selectedPlane.position.z,
-        ]
-      );
-      locationInfo["distance"] = `${Math.trunc(distance * 1000)}`;
-      locationInfo["duration"] = `${Math.trunc((distance * 1000) / numPoints)}`;
-      // locationInfo["from"] = `(${
-      //   Math.round(selectedPlane.position.x * 100) / 100
-      // },${Math.round(selectedPlane.position.y * 100) / 100},${
-      //   Math.round(selectedPlane.position.z * 100) / 100
-      // })`;
-      locationInfo["from"] = "Sai Gon, Viet Nam";
-
-      updateFlightInformation(locationInfo);
-    } else {
-      locationInfo["to"] = `(${Math.round(targetPosition.x * 100) / 100},${
-        Math.round(targetPosition.y * 100) / 100
-      },${Math.round(targetPosition.z * 100) / 100})`;
-      updateFlightInformation(locationInfo);
-    }
-    // Check if the clicked object is a location
-    if (intersectedObject.userData.isLocation) {
-      locationInfo["to"] = intersectedObject.userData.locationName;
-      locationInfo["transition"] = intersectedObject.userData.transition.name; // Update transition
-      currentTransition = intersectedObject.userData;
-      // console.log(intersectedObject.userData);
-      updateFlightInformation(locationInfo);
-    }
-    // Check if the clicked object is a transition
-    if (intersectedObject.userData.isTransition) {
-      locationInfo["to"] = intersectedObject.userData.locationName;
-      updateFlightInformation(locationInfo);
-    }
-  }
-});
-
 var numPoints = 300;
 var currentTransition = null;
-function animatePlaneMovement(plane, transitionPosition, targetPosition) {
+function animatePlaneMovement(plane, targetPosition) {
   let smokeTrail = createSmokeTrail();
   scene.add(smokeTrail);
 
@@ -629,8 +581,8 @@ function animatePlaneMovement(plane, transitionPosition, targetPosition) {
   function toSpherical(cartesian) {
     const radius = Math.sqrt(
       cartesian.x * cartesian.x +
-        cartesian.y * cartesian.y +
-        cartesian.z * cartesian.z
+      cartesian.y * cartesian.y +
+      cartesian.z * cartesian.z
     );
     const theta = Math.acos(cartesian.y / radius); // Góc cực
     const phi = Math.atan2(cartesian.z, cartesian.x); // Góc phương vị
@@ -647,93 +599,22 @@ function animatePlaneMovement(plane, transitionPosition, targetPosition) {
   }
 
   const startSpherical = toSpherical(start);
-  const transitionSpherical = transitionPosition
-    ? toSpherical(transitionPosition)
-    : null;
   const endSpherical = toSpherical(targetPosition);
 
-  const pointsToTransition = [];
   const pointsToEnd = [];
 
-  // let numPointsToTransition = 100; // Số điểm từ bắt đầu đến transition
-  let numPointsToEnd = 0; // Số điểm từ transition đến điểm đích, thay đổi giá trị này để điều chỉnh tốc độ
-  switch (numPoints) {
-    case 400:
-      numPointsToEnd = 80;
-      break;
-    case 200:
-      numPointsToEnd = 30;
-      break;
-    case 100:
-      numPointsToEnd = 10;
-      break;
-    default:
-      numPointsToEnd = 80;
-      break;
-  }
-  if (transitionSpherical) {
-    for (let i = 0; i <= numPoints; i++) {
-      const t = i / numPoints;
-      const intermediateSpherical = {
-        radius: radius + 1.5,
-        theta: startSpherical.theta * (1 - t) + transitionSpherical.theta * t,
-        phi: startSpherical.phi * (1 - t) + transitionSpherical.phi * t,
-      };
-      pointsToTransition.push(toCartesian(intermediateSpherical));
-    }
-  }
-
-  for (let i = 0; i <= numPointsToEnd; i++) {
-    const t = i / numPointsToEnd;
+  for (let i = 0; i <= numPoints; i++) {
+    const t = i / numPoints;
     const intermediateSpherical = {
       radius: radius + 1.5,
-      theta:
-        (transitionSpherical
-          ? transitionSpherical.theta
-          : startSpherical.theta) *
-          (1 - t) +
-        endSpherical.theta * t,
-      phi:
-        (transitionSpherical ? transitionSpherical.phi : startSpherical.phi) *
-          (1 - t) +
-        endSpherical.phi * t,
+      theta: startSpherical.theta * (1 - t) + endSpherical.theta * t,
+      phi: startSpherical.phi * (1 - t) + endSpherical.phi * t,
     };
     pointsToEnd.push(toCartesian(intermediateSpherical));
   }
 
   let index = 0;
   isPlaneMoving = true; // Đặt cờ khi bắt đầu di chuyển
-
-  const animateToTransition = () => {
-    if (index < pointsToTransition.length) {
-      plane.position.copy(pointsToTransition[index]);
-
-      if (index > 0) {
-        const prevPoint = pointsToTransition[index - 1];
-        const direction = pointsToTransition[index]
-          .clone()
-          .sub(prevPoint)
-          .normalize();
-        const quaternion = new Quaternion().setFromUnitVectors(
-          new Vector3(0, 1, 0),
-          direction
-        );
-        plane.setRotationFromQuaternion(quaternion);
-      }
-
-      updateSmokeTrail(
-        smokeTrail,
-        plane.position,
-        pointsToTransition[index].clone().sub(plane.position)
-      );
-
-      index++;
-      requestAnimationFrame(animateToTransition);
-    } else {
-      index = 0; // Reset lại chỉ số cho phần tiếp theo
-      setTimeout(animateToEnd, 0); // Dừng lại trong 2 giây tại điểm chuyển tiếp
-    }
-  };
 
   const animateToEnd = () => {
     if (index < pointsToEnd.length) {
@@ -756,6 +637,7 @@ function animatePlaneMovement(plane, transitionPosition, targetPosition) {
       );
 
       index++;
+      // sound.play();
       requestAnimationFrame(animateToEnd);
     } else {
       scene.remove(smokeTrail);
@@ -766,11 +648,7 @@ function animatePlaneMovement(plane, transitionPosition, targetPosition) {
     }
   };
 
-  if (transitionSpherical) {
-    animateToTransition();
-  } else {
-    animateToEnd();
-  }
+  animateToEnd();
 }
 
 function updateSmokeTrail(trail, position, velocity) {
@@ -862,13 +740,6 @@ function updateFlightInformation(info) {
       <div><span>From</span><br />${info.from}</div>
     </div>
     <div class="flight-info">
-      <img src="assets/transition.png" alt="transition" />
-      <div>
-            <span>Transition</span><br />
-            ${info.transition}
-          </div>
-    </div>
-    <div class="flight-info">
       <img src="assets/end.png" alt="end" />
       <div><span>To</span><br />${info.to}</div>
     </div>
@@ -892,31 +763,20 @@ function calDistance([x0, y0, z0], [x1, y1, z1]) {
 
 // Thêm hàm startFlight
 let currentTransitionPosition = null;
+let countInitial = 0;
 export function startFlight() {
-  if (selectedPlane && targetPosition) {
-    if (currentTransition && currentTransition.transition) {
-      currentTransitionPosition = currentTransition.transition.position;
-    } else {
-      currentTransitionPosition = null;
-    }
-    console.log("current trans : ", currentTransitionPosition);
-
-    if (currentTransitionPosition) {
-      animatePlaneMovement(
-        selectedPlane,
-        currentTransitionPosition,
-        targetPosition
-      );
-    } else {
-      console.log("enter transition null");
-      animatePlaneMovement(selectedPlane, null, targetPosition);
-    }
-
-    selectedPlane = null; // Reset sau khi di chuyển
-    targetPosition = null; // Reset sau khi di chuyển
-    currentTransition.transition.position = null; // Reset sau khi di chuyển
+  if (startPoint && endPoint) {
+    // Assuming `planesData[0].group` is your plane group
+    let plane = planesData[0].group;
+    countInitial += 1;
+    animatePlaneMovement(plane, endPoint);
+    // Reset after movement
+    startPoint = null;
+    endPoint = null;
+    startLocationName = "";
+    endLocationName = "";
   } else {
-    console.log("Plane or target position not selected");
+    console.log("Start or end points not properly selected");
   }
 }
 
@@ -930,3 +790,7 @@ function ringScene() {
   ring3.rotation.x = ring3.rotation.x * 0.95 - mousePos.y * 0.05 * 0.275;
   ring3.rotation.y = ring3.rotation.y * 0.95 - mousePos.x * 0.05 * 0.275;
 }
+
+
+
+

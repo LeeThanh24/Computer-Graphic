@@ -192,8 +192,7 @@
       }
 
       .flight-info:nth-child(2) div,
-      .flight-info:nth-child(3) div,
-      .flight-info:nth-child(4) div {
+      .flight-info:nth-child(3) div{
         height: 52px;
       }
     </style>
@@ -248,12 +247,12 @@
           <img src="assets/start.png" alt="start" />
           <div><span>From</span></div>
         </div>
-        <div class="flight-info">
+        <!-- <div class="flight-info">
           <img src="assets/transition.png" alt="transition" />
           <div>
             <span>Transition</span>
           </div>
-        </div>
+        </div> -->
         <div class="flight-info">
           <img src="assets/end.png" alt="end" />
           <div><span>To</span></div>
@@ -267,7 +266,7 @@
           <div>0<span> Hrs</span></div>
         </div>
         <div class="flight-info">
-          <button onclick="start()"><b>Start</b></button>
+          <button onclick="startFlight()"><b>Start</b></button>
         </div>
       </div>
       <div class="innerDiv">
