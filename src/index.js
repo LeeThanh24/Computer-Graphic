@@ -110,6 +110,7 @@ scene.add(moonLight);
 const listener = new AudioListener();
 camera.add(listener);
 
+//load sound
 const sound = new Audio(listener);
 const audioLoader = new AudioLoader();
 audioLoader.load("assets/plane-sound.mp3", function (buffer) {
@@ -118,8 +119,8 @@ audioLoader.load("assets/plane-sound.mp3", function (buffer) {
   sound.setVolume(0.5);
 });
 
+//load mouse
 let mousePos = new Vector2(0, 0);
-
 window.addEventListener("mousemove", (e) => {
   let x = e.clientX - innerWidth * 0.5;
   let y = e.clientY - innerHeight * 0.5;
@@ -452,9 +453,9 @@ renderer.domElement.addEventListener("click", function (event) {
       // Set the plane's position at the start point and adjust altitude
       if (planesData && planesData.length > 0) {
         let adjustedStartPoint = startPoint.clone();
-        adjustedStartPoint.y += 2;  // Adjust the value '1.5' to set the desired altitude
+        adjustedStartPoint.y += 2; // Adjust the value '1.5' to set the desired altitude
         planesData[0].group.position.copy(adjustedStartPoint);
-        planesData[0].group.updateMatrixWorld();  // Ensure the matrix is updated
+        planesData[0].group.updateMatrixWorld(); // Ensure the matrix is updated
         planesData[0].group.visible = true; // Show the plane
         planeVisible = true; // Update the flag
       }
@@ -463,7 +464,7 @@ renderer.domElement.addEventListener("click", function (event) {
         from: startLocationName,
         to: "",
         distance: "0",
-        duration: "0"
+        duration: "0",
       });
     } else if (!endPoint && intersectedObject.userData.isLocation) {
       endPoint = intersects[0].point.clone();
@@ -474,11 +475,15 @@ renderer.domElement.addEventListener("click", function (event) {
         [startPoint.x, startPoint.y, startPoint.z],
         [endPoint.x, endPoint.y, endPoint.z]
       );
+
+      // Tách phần cơ số và phần mũ của số
+      let [mantissa, exponent] = distance.toExponential().split("e");
+      console.log(mantissa, "", exponent);
       let flightInfo = {
         from: startLocationName,
         to: endLocationName,
-        distance: `${distance.toFixed(0)} `,
-        duration: `${Math.pow(((distance * 100) / numPoints), 2).toFixed(0)} ` // Example duration calculation
+        distance: `${Math.round(mantissa * 100)} `,
+        duration: `${Math.round((mantissa * 1000) / numPoints)} `, // Example duration calculation
       };
       updateFlightInformation(flightInfo);
     }
@@ -486,7 +491,7 @@ renderer.domElement.addEventListener("click", function (event) {
 });
 
 function makePlane(planeMesh, trailTexture, envMap, scene) {
-  console.log("enter here 1 time ")
+  console.log("enter here 1 time ");
   let plane = planeMesh.clone();
   let planeSize = 0.002;
   plane.scale.set(planeSize, planeSize, planeSize);
@@ -581,8 +586,8 @@ function animatePlaneMovement(plane, targetPosition) {
   function toSpherical(cartesian) {
     const radius = Math.sqrt(
       cartesian.x * cartesian.x +
-      cartesian.y * cartesian.y +
-      cartesian.z * cartesian.z
+        cartesian.y * cartesian.y +
+        cartesian.z * cartesian.z
     );
     const theta = Math.acos(cartesian.y / radius); // Góc cực
     const phi = Math.atan2(cartesian.z, cartesian.x); // Góc phương vị
@@ -602,7 +607,7 @@ function animatePlaneMovement(plane, targetPosition) {
   const endSpherical = toSpherical(targetPosition);
 
   const pointsToEnd = [];
-
+  // sound.play();
   for (let i = 0; i <= numPoints; i++) {
     const t = i / numPoints;
     const intermediateSpherical = {
@@ -637,7 +642,6 @@ function animatePlaneMovement(plane, targetPosition) {
       );
 
       index++;
-      // sound.play();
       requestAnimationFrame(animateToEnd);
     } else {
       scene.remove(smokeTrail);
@@ -758,7 +762,10 @@ function updateFlightInformation(info) {
 }
 
 function calDistance([x0, y0, z0], [x1, y1, z1]) {
-  return Math.hypot(x1 - x0, y1 - y0, z1 - z0);
+  return Math.exp(
+    (x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1) + (z0 - z1) * (z0 - z1),
+    2
+  );
 }
 
 // Thêm hàm startFlight
@@ -790,7 +797,3 @@ function ringScene() {
   ring3.rotation.x = ring3.rotation.x * 0.95 - mousePos.y * 0.05 * 0.275;
   ring3.rotation.y = ring3.rotation.y * 0.95 - mousePos.x * 0.05 * 0.275;
 }
-
-
-
-
